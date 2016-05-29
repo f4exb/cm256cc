@@ -959,7 +959,7 @@ FORCE_INLINE __m128i _mm_set_epi8(uint8_t i15, uint8_t i14, uint8_t i13, uint8_t
     return _mm_set_epi32(a0, a1, a2, a3);
 }
 
-FORCE_INLINE __m128i _mm_loadu_si128(__m128i *p )
+FORCE_INLINE __m128i _mm_loadu_si128(const __m128i *p )
 {
     return vld1q_s32((int32_t*) p);
 }
