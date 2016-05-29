@@ -53,3 +53,7 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+
+.cproject
+.project
+build/
