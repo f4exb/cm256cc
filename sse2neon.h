@@ -944,8 +944,33 @@ FORCE_INLINE void _mm_clflush(void const*p) {
     // no corollary for Neon?
 }
 
+// ******************************************
+// GF256 usage specific methods
+// ******************************************
+
+FORCE_INLINE __m128i _mm_set_epi8(uint8_t i15, uint8_t i14, uint8_t i13, uint8_t i12, uint8_t i11, uint8_t i10, uint8_t i9, uint8_t i8,
+        uint8_t i7, uint8_t i6, uint8_t i5, uint8_t i4, uint8_t i3, uint8_t i2, uint8_t i1, uint8_t i0)
+{
+    int32_t a0 = i15 | (i14<<8) | (i13<<16) | (i12<<24);
+    int32_t a1 = i11 | (i10<<8) | (i9<<16) | (i8<<24);
+    int32_t a2 = i7 | (i6<<8) | (i5<<16) | (i4<<24);
+    int32_t a3 = i3 | (i2<<8) | (i1<<16) | (i0<<24);
+
+    return _mm_set_epi32(a0, a1, a2, a3);
+}
+
+FORCE_INLINE __m128i _mm_loadu_si128(__m128i *p )
+{
+    return vld1q_s32((int32_t*) p);
+}
+
+FORCE_INLINE void _mm_storeu_si128(__m128i *p, __m128i a )
+{
+    _mm_store_si128(p, a);
+//    vst1q_s32((int32_t*) p,a);
+}
+
+
 #endif
-
-
 
 #endif /* SSE2NEON_H_ */
