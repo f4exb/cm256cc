@@ -255,7 +255,7 @@ bool example2()
     {
         if (k < params.OriginalCount)
         {
-            if (i % 10 != 9)
+            if (i % 5 != 4)
             {
                 rxBuffer[k] = txBuffer[i];
                 rxDescriptorBlocks[k].Block = (void *) &rxBuffer[k].protectedBlock;

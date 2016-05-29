@@ -44,6 +44,8 @@
 //
 // Edit these to port to your architecture
 
+#if defined(USE_SIMD)
+
 #ifdef _MSC_VER
 
     // Compiler-specific 128-bit SIMD register keyword
@@ -78,6 +80,24 @@
 
     // Compiler-specific SSE headers
     #include <x86intrin.h>
+
+#endif
+
+#elif defined(USE_NEON)
+
+    #include "sse2neon.h"
+
+    // Compiler-specific 128-bit SIMD register keyword
+    #define GF256_M128 __m128i
+
+    // Compiler-specific C++11 restrict keyword
+    #define GF256_RESTRICT __restrict__
+
+    // Compiler-specific force inline keyword
+    #define GF256_FORCE_INLINE __attribute__((always_inline)) inline
+
+    // Compiler-specific alignment keyword
+    #define GF256_ALIGNED __attribute__((align(16)))
 
 #endif
 
