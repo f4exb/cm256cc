@@ -300,7 +300,7 @@ int main()
     if (!ExampleFileUsage())
     {
         std::cerr << "ExampleFileUsage failed" << std::endl;
-        exit(1);
+        return 1;
     }
 
     std::cerr << "ExampleFileUsage successful" << std::endl;
@@ -308,7 +308,7 @@ int main()
     if (!example2())
     {
         std::cerr << "example2 failed" << std::endl;
-        exit(1);
+        return 1;
     }
 
     std::cerr << "example2 successful" << std::endl;
