@@ -959,6 +959,12 @@ FORCE_INLINE __m128i _mm_set_epi8(uint8_t i15, uint8_t i14, uint8_t i13, uint8_t
     return _mm_set_epi32(a0, a1, a2, a3);
 }
 
+FORCE_INLINE __m128i _mm_set1_epi8(uint8_t i)
+{
+    int32_t a = i | (i<<8) | (i<<16) | (i<<24);
+    return _mm_set1_epi32(a);
+}
+
 FORCE_INLINE __m128i _mm_loadu_si128(const __m128i *p )
 {
     return vld1q_s32((int32_t*) p);
@@ -970,6 +976,21 @@ FORCE_INLINE void _mm_storeu_si128(__m128i *p, __m128i a )
 //    vst1q_s32((int32_t*) p,a);
 }
 
+FORCE_INLINE __m128i _mm_shuffle_epi8(__m128i ia, __m128i ib)
+{
+    uint8_t *a = (uint8_t *) ia; // input a
+    uint8_t *b = (uint8_t *) ib; // input b
+    uint8_t r[16]; // output r
+
+    for (int i=0; i < 16; i++)
+    {
+       r[i] = (b[i] & 0x80 == 0x80) ? 0 : a[b[i] % 16];
+    }
+
+    return (__m128i) vld1q_u8(r);
+}
+
+#define _mm_srli_epi64( a, imm ) (__m128i)vshrq_n_u64((uint64x2_t)a, imm)
 
 #endif
 
