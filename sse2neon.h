@@ -978,9 +978,12 @@ FORCE_INLINE void _mm_storeu_si128(__m128i *p, __m128i a )
 
 FORCE_INLINE __m128i _mm_shuffle_epi8(__m128i ia, __m128i ib)
 {
-    uint8_t *a = (uint8_t *) ia; // input a
-    uint8_t *b = (uint8_t *) ib; // input b
+    uint8_t a[16]; // input a
+    uint8_t b[16]; // input b
     uint8_t r[16]; // output r
+
+    vst1q_u8(a, (uint8x16_t) ia);
+    vst1q_u8(b, (uint8x16_t) ib);
 
     for (int i=0; i < 16; i++)
     {
