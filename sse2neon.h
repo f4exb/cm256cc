@@ -951,12 +951,12 @@ FORCE_INLINE void _mm_clflush(void const*p) {
 FORCE_INLINE __m128i _mm_set_epi8(uint8_t i15, uint8_t i14, uint8_t i13, uint8_t i12, uint8_t i11, uint8_t i10, uint8_t i9, uint8_t i8,
         uint8_t i7, uint8_t i6, uint8_t i5, uint8_t i4, uint8_t i3, uint8_t i2, uint8_t i1, uint8_t i0)
 {
-    int32_t a0 = i15 | (i14<<8) | (i13<<16) | (i12<<24);
-    int32_t a1 = i11 | (i10<<8) | (i9<<16) | (i8<<24);
-    int32_t a2 = i7 | (i6<<8) | (i5<<16) | (i4<<24);
-    int32_t a3 = i3 | (i2<<8) | (i1<<16) | (i0<<24);
+    int32_t a0 =  i0 |  (i1<<8) |  (i2<<16) |  (i3<<24);
+    int32_t a1 =  i4 |  (i5<<8) |  (i6<<16) |  (i7<<24);
+    int32_t a2 =  i8 |  (i9<<8) | (i10<<16) | (i11<<24);
+    int32_t a3 = i12 | (i13<<8) | (i14<<16) | (i15<<24);
 
-    return _mm_set_epi32(a0, a1, a2, a3);
+    return _mm_set_epi32(a3, a2, a1, a0);
 }
 
 FORCE_INLINE __m128i _mm_set1_epi8(uint8_t i)
@@ -978,19 +978,16 @@ FORCE_INLINE void _mm_storeu_si128(__m128i *p, __m128i a )
 
 FORCE_INLINE __m128i _mm_shuffle_epi8(__m128i ia, __m128i ib)
 {
-    uint8_t a[16]; // input a
-    uint8_t b[16]; // input b
+    uint8_t *a = (uint8_t *) &ia; // input a
+    uint8_t *b = (uint8_t *) &ib; // input b
     uint8_t r[16]; // output r
-
-    vst1q_u8(a, (uint8x16_t) ia);
-    vst1q_u8(b, (uint8x16_t) ib);
 
     for (int i=0; i < 16; i++)
     {
-       r[i] = (b[i] & 0x80 == 0x80) ? 0 : a[b[i] % 16];
+        r[i] = (b[i] & 0x80) ? 0 : a[b[i] % 16];
     }
 
-    return (__m128i) vld1q_u8(r);
+    return *((__m128i *) r);
 }
 
 #define _mm_srli_epi64( a, imm ) (__m128i)vshrq_n_u64((uint64x2_t)a, imm)
