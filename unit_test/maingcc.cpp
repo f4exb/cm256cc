@@ -27,7 +27,16 @@
 */
 
 #include <iostream>
+#include <sys/time.h>
+
 #include "../cm256.h"
+
+long long getUSecs()
+{
+    struct timeval tp;
+    gettimeofday(&tp, 0);
+    return (long long) tp.tv_sec * 1000000L + tp.tv_usec;
+}
 
 void initializeBlocks(cm256_block originals[256], int blockCount, int blockBytes)
 {
@@ -233,6 +242,9 @@ bool example2()
     }
 
     // Generate recovery data
+
+    long long ts = getUSecs();
+
     if (cm256_encode(params, txDescriptorBlocks, txRecovery))
     {
         std::cerr << "example2: encode failed" << std::endl;
@@ -240,6 +252,10 @@ bool example2()
         delete[] txRecovery;
         return false;
     }
+
+    long long usecs = getUSecs() - ts;
+
+    std::cerr << "Encoded in " << usecs << " microseconds" << std::endl;
 
     // insert recovery data in sent data
     for (int i = 0; i < params.RecoveryCount; i++)
@@ -265,10 +281,7 @@ bool example2()
         }
     }
 
-//    for (int i = 0; i < params.OriginalCount; i++)
-//    {
-//        std::cerr << (unsigned int) rxBuffer[i].blockIndex << std::endl;
-//    }
+    ts = getUSecs();
 
     if (cm256_decode(params, rxDescriptorBlocks))
     {
@@ -279,6 +292,8 @@ bool example2()
         return false;
     }
 
+    usecs = getUSecs() - ts;
+
     for (int i = 0; i < params.OriginalCount; i++)
     {
         std::cerr << i << ":"
@@ -286,6 +301,8 @@ bool example2()
                 << (unsigned int) rxBuffer[i].protectedBlock.blockIndex << ":"
                 << (unsigned int) rxBuffer[i].protectedBlock.data[0] << std::endl;
     }
+
+    std::cerr << "Decoded in " << usecs << " microseconds" << std::endl;
 
     delete[] txBuffer;
     delete[] txRecovery;
@@ -304,6 +321,7 @@ int main()
     }
 
     std::cerr << "ExampleFileUsage successful" << std::endl;
+
 
     if (!example2())
     {
