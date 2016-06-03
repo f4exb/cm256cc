@@ -202,7 +202,7 @@ bool example2()
     cm256_encoder_params params;
 
     // Number of bytes per file block
-    params.BlockBytes = payloadSize; // 4 subframes of 64 bytes
+    params.BlockBytes = sizeof(ProtectedBlock);
 
     // Number of blocks
     params.OriginalCount = 128;  // Superframe = set of protected frames
