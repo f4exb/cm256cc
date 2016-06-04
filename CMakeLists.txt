@@ -68,6 +68,7 @@ set(cm256_SOURCES
 set(cm256_HEADERS
   cm256.h
   gf256.h
+  sse2neon.h
 )
 
 add_library(cm256 SHARED
