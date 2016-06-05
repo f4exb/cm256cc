@@ -825,13 +825,13 @@ FORCE_INLINE __m128i _mm_cvtsi32_si128(int a)
 // Applies a type cast to reinterpret four 32-bit floating point values passed in as a 128-bit parameter as packed 32-bit integers. https://msdn.microsoft.com/en-us/library/bb514099.aspx
 FORCE_INLINE __m128i _mm_castps_si128(__m128 a)
 {
-    return *(const __m128i *)&a;
+    return *(const __m128i *) ((void *) &a);
 }
 
 // Applies a type cast to reinterpret four 32-bit integers passed in as a 128-bit parameter as packed 32-bit floating point values. https://msdn.microsoft.com/en-us/library/bb514029.aspx
 FORCE_INLINE __m128 _mm_castsi128_ps(__m128i a)
 {
-    return *(const __m128 *)&a;
+    return *(const __m128 *) ((void *) &a);
 }
 
 // Loads 128-bit value. : https://msdn.microsoft.com/en-us/library/atzzad1h(v=vs.80).aspx
@@ -980,14 +980,29 @@ FORCE_INLINE __m128i _mm_shuffle_epi8(__m128i ia, __m128i ib)
 {
     uint8_t *a = (uint8_t *) &ia; // input a
     uint8_t *b = (uint8_t *) &ib; // input b
-    uint8_t r[16]; // output r
+    int32_t r[4];
 
-    for (int i=0; i < 16; i++)
-    {
-        r[i] = (b[i] & 0x80) ? 0 : a[b[i] % 16];
-    }
+    r[0] = ((b[3] & 0x80) ? 0 : a[b[3] % 16])<<24;
+    r[0] |= ((b[2] & 0x80) ? 0 : a[b[2] % 16])<<16;
+    r[0] |= ((b[1] & 0x80) ? 0 : a[b[1] % 16])<<8;
+    r[0] |= ((b[0] & 0x80) ? 0 : a[b[0] % 16]);
 
-    return *((__m128i *) r);
+    r[1] = ((b[7] & 0x80) ? 0 : a[b[7] % 16])<<24;
+    r[1] |= ((b[6] & 0x80) ? 0 : a[b[6] % 16])<<16;
+    r[1] |= ((b[5] & 0x80) ? 0 : a[b[5] % 16])<<8;
+    r[1] |= ((b[4] & 0x80) ? 0 : a[b[4] % 16]);
+
+    r[2] = ((b[11] & 0x80) ? 0 : a[b[11] % 16])<<24;
+    r[2] |= ((b[10] & 0x80) ? 0 : a[b[10] % 16])<<16;
+    r[2] |= ((b[9] & 0x80) ? 0 : a[b[9] % 16])<<8;
+    r[2] |= ((b[8] & 0x80) ? 0 : a[b[8] % 16]);
+
+    r[3] = ((b[15] & 0x80) ? 0 : a[b[15] % 16])<<24;
+    r[3] |= ((b[14] & 0x80) ? 0 : a[b[14] % 16])<<16;
+    r[3] |= ((b[13] & 0x80) ? 0 : a[b[13] % 16])<<8;
+    r[3] |= ((b[12] & 0x80) ? 0 : a[b[12] % 16]);
+
+    return vld1q_s32(r);
 }
 
 #define _mm_srli_epi64( a, imm ) (__m128i)vshrq_n_u64((uint64x2_t)a, imm)
