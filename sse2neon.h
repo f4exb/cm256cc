@@ -825,13 +825,15 @@ FORCE_INLINE __m128i _mm_cvtsi32_si128(int a)
 // Applies a type cast to reinterpret four 32-bit floating point values passed in as a 128-bit parameter as packed 32-bit integers. https://msdn.microsoft.com/en-us/library/bb514099.aspx
 FORCE_INLINE __m128i _mm_castps_si128(__m128 a)
 {
-    return *(const __m128i *) ((void *) &a);
+    return vcvtq_s32_f32(a);
+    //return *((const __m128i *) &a);
 }
 
 // Applies a type cast to reinterpret four 32-bit integers passed in as a 128-bit parameter as packed 32-bit floating point values. https://msdn.microsoft.com/en-us/library/bb514029.aspx
 FORCE_INLINE __m128 _mm_castsi128_ps(__m128i a)
 {
-    return *(const __m128 *) ((void *) &a);
+    return vcvtq_f32_s32(a);
+    //return *((const __m128 *) &a);
 }
 
 // Loads 128-bit value. : https://msdn.microsoft.com/en-us/library/atzzad1h(v=vs.80).aspx
