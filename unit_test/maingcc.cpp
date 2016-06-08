@@ -316,17 +316,29 @@ bool example2()
  */
 bool example3()
 {
-    static const int payloadSize = 512 - 4; // makes the super block size equal to block size
 #pragma pack(push, 1)
+    struct Sample
+    {
+        uint16_t i;
+        uint16_t q;
+    };
+    struct Header
+    {
+        uint16_t frameIndex;
+        uint8_t  blockIndex;
+        uint8_t  filler;
+    };
+
+    static const int samplesPerBlock = (512 - sizeof(Header)) / sizeof(Sample);
+
     struct ProtectedBlock
     {
-        uint8_t blockIndex;
-        uint8_t data[payloadSize];
+        Sample samples[samplesPerBlock];
     };
     struct SuperBlock
     {
-        uint16_t       frameIndex;
-        uint8_t        blockIndex;
+        Header         header;
+        Sample         samples[samplesPerBlock];
         ProtectedBlock protectedBlock;
     };
 #pragma pack(pop)
@@ -355,27 +367,20 @@ bool example3()
     // Fill original data
     for (int i = 0; i < params.OriginalCount+params.RecoveryCount; ++i)
     {
-        txBuffer[i].frameIndex = frameCount;
-        txBuffer[i].blockIndex = i;
+        txBuffer[i].header.frameIndex = frameCount;
+        txBuffer[i].header.blockIndex = i;
 
         if (i < params.OriginalCount)
         {
-            txBuffer[i].protectedBlock.blockIndex = i;
-
-            for (int j = 0; j < payloadSize; ++j)
-            {
-                txBuffer[i].protectedBlock.data[j] = i;
-            }
-
-            txDescriptorBlocks[i].Block = (void *) &txBuffer[i].protectedBlock;
-            txDescriptorBlocks[i].Index = txBuffer[i].blockIndex;
+            txBuffer[i].protectedBlock.samples[0].i = i; // marker
         }
         else
         {
             memset((void *) &txBuffer[i].protectedBlock, 0, sizeof(ProtectedBlock));
-            txDescriptorBlocks[i].Block = (void *) &txBuffer[i].protectedBlock;
-            txDescriptorBlocks[i].Index = i;
         }
+
+        txDescriptorBlocks[i].Block = (void *) &txBuffer[i].protectedBlock;
+        txDescriptorBlocks[i].Index = txBuffer[i].header.blockIndex;
     }
 
     // Generate recovery data
@@ -412,14 +417,17 @@ bool example3()
         }
     }
 
-    ProtectedBlock* retrievedDataBuffer = new ProtectedBlock[params.OriginalCount]; // tentatively retrieved blocks
-    ProtectedBlock* recoveryBuffer = new ProtectedBlock[params.OriginalCount];      // recovery blocks
+    Sample *samplesBuffer = new Sample[samplesPerBlock * params.OriginalCount];
+    ProtectedBlock* retrievedDataBuffer = (ProtectedBlock *) samplesBuffer;
+    ProtectedBlock* recoveryBuffer = new ProtectedBlock[params.OriginalCount];      // recovery blocks with maximum size
+
     cm256_block rxDescriptorBlocks[params.OriginalCount];
+    int recoveryStartIndex;
     k = 0;
 
     for (int i = 0; i < params.OriginalCount; i++)
     {
-        int blockIndex = rxBuffer[i].blockIndex;
+        int blockIndex = rxBuffer[i].header.blockIndex;
 
         if (blockIndex < params.OriginalCount) // it's an original block
         {
@@ -429,6 +437,11 @@ bool example3()
         }
         else // it's a recovery block
         {
+            if (k == 0)
+            {
+                recoveryStartIndex = i;
+            }
+
             recoveryBuffer[k] = rxBuffer[i].protectedBlock;
             rxDescriptorBlocks[i].Block = (void *) &recoveryBuffer[k];
             rxDescriptorBlocks[i].Index = blockIndex;
@@ -443,7 +456,7 @@ bool example3()
         delete[] txBuffer;
         delete[] txRecovery;
         delete[] rxBuffer;
-        delete[] retrievedDataBuffer;
+        delete[] samplesBuffer;
         delete[] recoveryBuffer;
 
         return false;
@@ -453,15 +466,15 @@ bool example3()
 
     for (int i = 0; i < k; i++) // recover missing blocks
     {
-        int blockIndex = recoveryBuffer[i].blockIndex;
+        int blockIndex = rxDescriptorBlocks[recoveryStartIndex+i].Index;
         retrievedDataBuffer[blockIndex] = recoveryBuffer[i];
     }
 
     for (int i = 0; i < params.OriginalCount; i++)
     {
         std::cerr << i << ":"
-                << (unsigned int) retrievedDataBuffer[i].blockIndex << ":"
-                << (unsigned int) retrievedDataBuffer[i].data[0] << std::endl;
+                << (unsigned int) rxDescriptorBlocks[i].Index << ":"
+                << (unsigned int) retrievedDataBuffer[i].samples[0].i << std::endl;
     }
 
     std::cerr << "Decoded in " << usecs << " microseconds" << std::endl;
@@ -469,7 +482,7 @@ bool example3()
     delete[] txBuffer;
     delete[] txRecovery;
     delete[] rxBuffer;
-    delete[] retrievedDataBuffer;
+    delete[] samplesBuffer;
     delete[] recoveryBuffer;
 
     return true;
