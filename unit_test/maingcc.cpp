@@ -338,7 +338,6 @@ bool example3()
     struct SuperBlock
     {
         Header         header;
-        Sample         samples[samplesPerBlock];
         ProtectedBlock protectedBlock;
     };
 #pragma pack(pop)
