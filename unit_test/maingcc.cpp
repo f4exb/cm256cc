@@ -544,18 +544,22 @@ bool example4()
     {
         txBuffer[i].header.frameIndex = frameCount;
         txBuffer[i].header.blockIndex = i;
+        txDescriptorBlocks[i].Block = (void *) &txBuffer[i].protectedBlock;
+        txDescriptorBlocks[i].Index = txBuffer[i].header.blockIndex;
 
         if (i < params.OriginalCount)
         {
-            txBuffer[i].protectedBlock.samples[0].i = i; // marker
+            for (int k = 0; k < samplesPerBlock; k++)
+            {
+                txBuffer[i].protectedBlock.samples[k].i = rand();
+                txBuffer[i].protectedBlock.samples[k].q = rand();
+            }
         }
         else
         {
             memset((void *) &txBuffer[i].protectedBlock, 0, sizeof(ProtectedBlock));
         }
 
-        txDescriptorBlocks[i].Block = (void *) &txBuffer[i].protectedBlock;
-        txDescriptorBlocks[i].Index = txBuffer[i].header.blockIndex;
     }
 
     // Generate recovery data
@@ -583,7 +587,7 @@ bool example4()
 
     for (int i = 0; i < params.OriginalCount+params.RecoveryCount; i++)
     {
-        if (i % 5 != 4)
+        if (i % 6 != 4)
         {
             rxBuffer[nbRxBlocks] = txBuffer[i];
             nbRxBlocks++;
@@ -635,8 +639,9 @@ bool example4()
                 recoveryCount++;
             }
 
-            nbBlocks++;
         }
+
+        nbBlocks++;
 
         if (nbBlocks == params.OriginalCount) // ready
         {
@@ -654,6 +659,7 @@ bool example4()
                 }
 
                 usecs = getUSecs() - ts;
+                std::cerr << "recover missing blocks..." << std::endl;
 
                 for (int ir = 0; ir < recoveryCount; ir++) // recover missing blocks
                 {
@@ -669,24 +675,68 @@ bool example4()
                         retrievedDataBuffer[blockIndex] = recoveryBuffer[ir];
                     }
 
-                    std::cerr << ir << ":" << recoveryBuffer[ir].samples[0].i << std::endl;
+                    std::cerr << ir << ":" << blockIndex << ": " << recoveryBuffer[ir].samples[0].i << std::endl;
                 }
             }
         }
     }
 
-    std::cerr << "final" << std::endl;
+    std::cerr << "final..." << std::endl;
 
     for (int i = 1; i < params.OriginalCount; i++)
     {
-        std::cerr << i << ":"
-                << (unsigned int) rxDescriptorBlocks[i].Index << ":"
-                << (unsigned int) retrievedDataBuffer[i].samples[0].i << std::endl;
+        bool compOKi = true;
+        bool compOKq = true;
+
+        for (int k = 0; k < samplesPerBlock; k++)
+        {
+            if (retrievedDataBuffer[i].samples[k].i != txBuffer[i].protectedBlock.samples[k].i)
+            {
+                std::cerr << i << ": error: " << k << ": i: " << retrievedDataBuffer[i].samples[k].i << "/" << txBuffer[i].protectedBlock.samples[k].i << std::endl;
+                compOKi = false;
+                break;
+            }
+
+            if (retrievedDataBuffer[i].samples[k].q != txBuffer[i].protectedBlock.samples[k].q)
+            {
+                std::cerr << i << ": error: " << k << ": q: " << retrievedDataBuffer[i].samples[k].q << "/" << txBuffer[i].protectedBlock.samples[k].q << std::endl;
+                compOKq = false;
+                break;
+            }
+        }
+
+        if (compOKi && compOKq)
+        {
+            std::cerr << i << ": OK" << std::endl;
+        }
     }
 
-    std::cerr << "zero:"
-        << (unsigned int) rxDescriptorBlocks[0].Index << ":"
-        << (unsigned int) retrievedDataBuffer[0].samples[0].i << std::endl;
+    // Zero:
+
+    bool compOKi = true;
+    bool compOKq = true;
+
+    for (int k = 0; k < samplesPerBlock; k++)
+    {
+        if (blockZero.samples[k].i != txBuffer[0].protectedBlock.samples[k].i)
+        {
+            std::cerr << "zero: error: " << k << ": i: " << blockZero.samples[k].i << "/" << txBuffer[0].protectedBlock.samples[k].i << std::endl;
+            compOKi = false;
+            break;
+        }
+
+        if (blockZero.samples[k].q != txBuffer[0].protectedBlock.samples[k].q)
+        {
+            std::cerr << "zero: error: " << k << ": q: " << blockZero.samples[k].q << "/" << txBuffer[0].protectedBlock.samples[k].q << std::endl;
+            compOKq = false;
+            break;
+        }
+    }
+
+    if (compOKi && compOKq)
+    {
+        std::cerr << "zero: OK" << std::endl;
+    }
 
     std::cerr << "Decoded in " << usecs << " microseconds" << std::endl;
 
@@ -698,34 +748,39 @@ bool example4()
 
 int main()
 {
+    std::cerr << "ExampleFileUsage:" << std::endl;
+
     if (!ExampleFileUsage())
     {
-        std::cerr << "ExampleFileUsage failed" << std::endl;
+        std::cerr << "ExampleFileUsage failed" << std::endl << std::endl;
         return 1;
     }
 
-    std::cerr << "ExampleFileUsage successful" << std::endl;
+    std::cerr << "ExampleFileUsage successful" << std::endl << std::endl;
+    std::cerr << "example2:" << std::endl;
 
 
     if (!example2())
     {
-        std::cerr << "example2 failed" << std::endl;
+        std::cerr << "example2 failed" << std::endl << std::endl;
         return 1;
     }
 
-    std::cerr << "example2 successful" << std::endl;
+    std::cerr << "example2 successful" << std::endl << std::endl;
+    std::cerr << "example3:" << std::endl;
 
     if (!example3())
     {
-        std::cerr << "example3 failed" << std::endl;
+        std::cerr << "example3 failed" << std::endl << std::endl;
         return 1;
     }
 
-    std::cerr << "example3 successful" << std::endl;
+    std::cerr << "example3 successful" << std::endl << std::endl;
+    std::cerr << "example4:" << std::endl;
 
     if (!example4())
     {
-        std::cerr << "example4 failed" << std::endl;
+        std::cerr << "example4 failed" << std::endl << std::endl;
         return 1;
     }
 
