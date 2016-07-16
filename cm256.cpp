@@ -75,7 +75,7 @@
 //-----------------------------------------------------------------------------
 // Initialization
 
-extern "C" int cm256_init_(int version)
+int cm256_init_(int version)
 {
     if (version != CM256_VERSION)
     {
@@ -132,7 +132,7 @@ static GF256_FORCE_INLINE unsigned char GetMatrixElement(unsigned char x_i, unsi
 //-----------------------------------------------------------------------------
 // Encoding
 
-extern "C" void cm256_encode_block(
+void cm256_encode_block(
     cm256_encoder_params params, // Encoder parameters
     cm256_block* originals,      // Array of pointers to original blocks
     int recoveryBlockIndex,      // Return value from cm256_get_recovery_block_index()
@@ -189,7 +189,7 @@ extern "C" void cm256_encode_block(
     }
 }
 
-extern "C" int cm256_encode(
+int cm256_encode(
     cm256_encoder_params params, // Encoder params
     cm256_block* originals,      // Array of pointers to original blocks
     void* recoveryBlocks)        // Output recovery blocks end-to-end
@@ -551,7 +551,7 @@ void CM256Decoder::Decode()
     delete[] dynamicMatrix;
 }
 
-extern "C" int cm256_decode(
+int cm256_decode(
     cm256_encoder_params params, // Encoder params
     cm256_block* blocks)         // Array of 'originalCount' blocks as described above
 {

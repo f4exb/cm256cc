@@ -312,7 +312,7 @@ extern "C" int gf256_init_(int version)
 //-----------------------------------------------------------------------------
 // Operations
 
-extern "C" void gf256_add_mem(void * GF256_RESTRICT vx,
+void gf256_add_mem(void * GF256_RESTRICT vx,
                               const void * GF256_RESTRICT vy, int bytes)
 {
     GF256_M128 * GF256_RESTRICT x16 = reinterpret_cast<GF256_M128*>(vx);
@@ -396,7 +396,7 @@ extern "C" void gf256_add_mem(void * GF256_RESTRICT vx,
     }
 }
 
-extern "C" void gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRICT vx,
+void gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRICT vx,
                                const void * GF256_RESTRICT vy, int bytes)
 {
     GF256_M128 * GF256_RESTRICT z16 = reinterpret_cast<GF256_M128*>(vz);
@@ -463,7 +463,7 @@ extern "C" void gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_REST
     }
 }
 
-extern "C" void gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRICT vx,
+void gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRICT vx,
                                  const void * GF256_RESTRICT vy, int bytes)
 {
     GF256_M128 * GF256_RESTRICT z16 = reinterpret_cast<GF256_M128*>(vz);
@@ -551,7 +551,7 @@ extern "C" void gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RE
     }
 }
 
-extern "C" void gf256_muladd_mem(void * GF256_RESTRICT vz, uint8_t y,
+void gf256_muladd_mem(void * GF256_RESTRICT vz, uint8_t y,
                                  const void * GF256_RESTRICT vx, int bytes)
 {
     // Use a single if-statement to handle special cases
@@ -640,7 +640,7 @@ extern "C" void gf256_muladd_mem(void * GF256_RESTRICT vz, uint8_t y,
     }
 }
 
-extern "C" void gf256_mul_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRICT vx, uint8_t y, int bytes)
+void gf256_mul_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRICT vx, uint8_t y, int bytes)
 {
     // Use a single if-statement to handle special cases
     if (y <= 1)
@@ -726,7 +726,7 @@ extern "C" void gf256_mul_mem(void * GF256_RESTRICT vz, const void * GF256_RESTR
     }
 }
 
-extern "C" void gf256_memswap(void * GF256_RESTRICT vx, void * GF256_RESTRICT vy, int bytes)
+void gf256_memswap(void * GF256_RESTRICT vx, void * GF256_RESTRICT vy, int bytes)
 {
     GF256_M128 * GF256_RESTRICT x16 = reinterpret_cast<GF256_M128*>(vx);
     GF256_M128 * GF256_RESTRICT y16 = reinterpret_cast<GF256_M128*>(vy);

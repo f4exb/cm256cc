@@ -610,22 +610,22 @@ bool example4()
 
     for (int i = 0; i < nbRxBlocks; i++)
     {
+        int blockIndex = rxBuffer[i].header.blockIndex;
+
         if (nbBlocks < params.OriginalCount) // not enough data store it
         {
-            int blockIndex = rxBuffer[i].header.blockIndex;
+            rxDescriptorBlocks[i].Index = blockIndex;
 
             if (blockIndex == 0) // it is block #0
             {
                 blockZero = rxBuffer[i].protectedBlock;
                 rxDescriptorBlocks[i].Block = (void *) &blockZero;
-                rxDescriptorBlocks[i].Index = blockIndex;
                 blockZeroRetrieved = true;
             }
             else if (blockIndex < params.OriginalCount) // it's an original block
             {
                 retrievedDataBuffer[blockIndex - 1] = rxBuffer[i].protectedBlock;
                 rxDescriptorBlocks[i].Block = (void *) &retrievedDataBuffer[blockIndex - 1];
-                rxDescriptorBlocks[i].Index = blockIndex;
             }
             else // it's a recovery block
             {
@@ -636,7 +636,6 @@ bool example4()
 
                 recoveryBuffer[recoveryCount] = rxBuffer[i].protectedBlock;
                 rxDescriptorBlocks[i].Block = (void *) &recoveryBuffer[recoveryCount];
-                rxDescriptorBlocks[i].Index = blockIndex;
                 recoveryCount++;
             }
         }
