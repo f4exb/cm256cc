@@ -52,7 +52,7 @@
     #define GF256_M128 __m128i
 
     // Compiler-specific C++11 restrict keyword
-    #define GF256_RESTRICT __restrict
+    #define GF256_RESTRICT_KW __restrict
 
     // Compiler-specific force inline keyword
     #define GF256_FORCE_INLINE __forceinline
@@ -70,7 +70,7 @@
     #define GF256_M128 __m128i
 
     // Compiler-specific C++11 restrict keyword
-    #define GF256_RESTRICT __restrict__
+    #define GF256_RESTRICT_KW __restrict__
 
     // Compiler-specific force inline keyword
     #define GF256_FORCE_INLINE __attribute__((always_inline)) inline
@@ -91,7 +91,7 @@
     #define GF256_M128 __m128i
 
     // Compiler-specific C++11 restrict keyword
-    #define GF256_RESTRICT __restrict__
+    #define GF256_RESTRICT_KW __restrict__
 
     // Compiler-specific force inline keyword
     #define GF256_FORCE_INLINE __attribute__((always_inline)) inline
@@ -99,6 +99,12 @@
     // Compiler-specific alignment keyword
     #define GF256_ALIGNED __attribute__((align(16)))
 
+#endif
+
+#if defined(NO_RESTRICT)
+    #define GF256_RESTRICT
+#else
+    #define GF256_RESTRICT GF256_RESTRICT_KW
 #endif
 
 #ifndef nullptr

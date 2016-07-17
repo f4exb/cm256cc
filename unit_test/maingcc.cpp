@@ -646,7 +646,6 @@ bool example4()
         {
             if (recoveryCount > 0)
             {
-                params.RecoveryCount = recoveryCount;
                 ts = getUSecs();
 
                 if (cm256_decode(params, rxDescriptorBlocks))
