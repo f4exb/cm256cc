@@ -79,6 +79,8 @@ add_library(cm256 SHARED
   ${cm256_SOURCES}
 )
 
+# single pass test
+
 add_executable(cm256_test
   unit_test/maingcc.cpp
 )
@@ -90,6 +92,34 @@ target_include_directories(cm256_test PUBLIC
 
 target_link_libraries(cm256_test cm256)
 
-install(TARGETS cm256_test DESTINATION bin)
+# transmit side test
+
+add_executable(cm256_tx
+  unit_test/transmit.cpp
+)
+
+target_include_directories(cm256_tx PUBLIC
+    ${PROJECT_SOURCE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+target_link_libraries(cm256_tx cm256)
+
+# receive side test
+
+add_executable(cm256_rx
+  unit_test/receive.cpp
+)
+
+target_include_directories(cm256_rx PUBLIC
+    ${PROJECT_SOURCE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+target_link_libraries(cm256_rx cm256)
+
+# Installation
+
+install(TARGETS cm256_test cm256_tx cm256_rx DESTINATION bin)
 install(TARGETS cm256 DESTINATION lib)
 install(FILES ${cm256_HEADERS} DESTINATION include/${PROJECT_NAME})
