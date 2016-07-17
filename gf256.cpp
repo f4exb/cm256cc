@@ -278,7 +278,7 @@ static bool IsLittleEndian()
     return 0x01020304 == *reinterpret_cast<uint32_t*>(LittleEndianTestData);
 }
 
-extern "C" int gf256_init_(int version)
+int gf256_init_(int version)
 {
     if (version != GF256_VERSION)
     {
