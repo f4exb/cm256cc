@@ -28,18 +28,13 @@
 
 #include <iostream>
 #include <fstream>
-#include <sys/time.h>
+#include <string>
+#include <getopt.h>
 
+#include "mainutils.h"
 #include "../cm256.h"
 
-long long getUSecs()
-{
-    struct timeval tp;
-    gettimeofday(&tp, 0);
-    return (long long) tp.tv_sec * 1000000L + tp.tv_usec;
-}
-
-bool example4()
+static bool example0(const std::string& filename, const std::string& refFilename)
 {
 #pragma pack(push, 1)
     struct Sample
@@ -152,13 +147,12 @@ bool example4()
         }
     }
 
-
     FileHeader fileHeader;
     fileHeader.m_cm256Params = params;
     fileHeader.m_txBlocks = nbTxFileBlocks;
 
     std::ofstream txFile;
-    txFile.open("cm256.test", std::ios::out | std::ios::binary);
+    txFile.open(filename.c_str(), std::ios::out | std::ios::binary);
 
     txFile.write((const char *) &fileHeader, sizeof(FileHeader));
 
@@ -172,7 +166,7 @@ bool example4()
     // reference
 
     std::ofstream refFile;
-    refFile.open("ref.test", std::ios::out | std::ios::binary);
+    refFile.open(refFilename.c_str(), std::ios::out | std::ios::binary);
 
     refFile.write((const char *) &fileHeader, sizeof(FileHeader));
 
@@ -186,18 +180,103 @@ bool example4()
     return true;
 }
 
-
-int main()
+static void usage()
 {
-    std::cerr << "example4:" << std::endl;
+    fprintf(stderr,
+    "Usage: cm256_tx [options]\n"
+    "\n"
+    "  -c case        Test case index\n"
+    "     - 0: file test:\n"
+    "  -f file        test file\n"
+    "  -r ref_file    reference file\n"
+    "     - 1: UDP test:\n"
+    "  -I address     IP address. Samples are sent to this address (default: 127.0.0.1)\n"
+    "  -p port        Data port. Samples are sent on this UDP port (default 9090)\n"
+    "\n");
+}
 
-    if (!example4())
+int main(int argc, char *argv[])
+{
+    int testCaseIndex = 0;
+    std::string dataaddress("127.0.0.1");
+    int dataport = 9090;
+    std::string filename("cm256.test");
+    std::string refFilename("cm256.ref.test");
+
+    const struct option longopts[] = {
+        { "case",       1, NULL, 'c' },
+        { "daddress",   2, NULL, 'I' },
+        { "dport",      1, NULL, 'P' },
+        { "file",       2, NULL, 'f' },
+        { "reffile",    2, NULL, 'r' },
+        { NULL,         0, NULL, 0 } };
+
+    int c, longindex, value;
+    while ((c = getopt_long(argc, argv,
+            "c:I:P:f:r:",
+            longopts, &longindex)) >= 0)
     {
-        std::cerr << "example4 failed" << std::endl << std::endl;
-        return 1;
+        switch (c)
+        {
+        case 'c':
+            if (!parse_int(optarg, value) || (value < 0) || (value > 1))
+            {
+                usage();
+                badarg("-b");
+                exit(1);
+            }
+            else
+            {
+                testCaseIndex = value;
+            }
+            break;
+        case 'I':
+            dataaddress.assign(optarg);
+            break;
+        case 'P':
+            if (!parse_int(optarg, value) || (value < 0))
+            {
+                usage();
+                badarg("-P");
+                exit(1);
+            }
+            else
+            {
+                dataport = value;
+            }
+            break;
+        case 'f':
+            filename.assign(optarg);
+            break;
+        case 'r':
+            refFilename.assign(optarg);
+            break;
+        default:
+            usage();
+            fprintf(stderr, "ERROR: Invalid command line options\n");
+            exit(1);
+        }
     }
 
-    std::cerr << "example4 successful" << std::endl;
+    if (optind < argc)
+    {
+        usage();
+        fprintf(stderr, "ERROR: Unexpected command line options\n");
+        exit(1);
+    }
+
+    if (testCaseIndex == 0)
+    {
+        std::cerr << "example0:" << std::endl;
+
+        if (!example0(filename, refFilename))
+        {
+            std::cerr << "example0 failed" << std::endl << std::endl;
+            return 1;
+        }
+
+        std::cerr << "example0 successful" << std::endl;
+    }
 
     return 0;
 }

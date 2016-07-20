@@ -95,6 +95,7 @@ target_link_libraries(cm256_test cm256)
 # transmit side test
 
 add_executable(cm256_tx
+  unit_test/mainutils.cpp 
   unit_test/transmit.cpp
 )
 
@@ -108,6 +109,7 @@ target_link_libraries(cm256_tx cm256)
 # receive side test
 
 add_executable(cm256_rx
+  unit_test/mainutils.cpp 
   unit_test/receive.cpp
 )
 
