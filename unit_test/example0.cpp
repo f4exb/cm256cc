@@ -71,7 +71,7 @@ bool example0_rx(const std::string& filename, const std::string& refFilename)
 
     rxFile.close();
 
-    Sample *samplesBuffer = new Sample[samplesPerBlock * (fileHeader.m_cm256Params.OriginalCount)];
+    Sample *samplesBuffer = new Sample[nbSamplesPerBlock * (fileHeader.m_cm256Params.OriginalCount)];
     ProtectedBlock* retrievedDataBuffer = (ProtectedBlock *) samplesBuffer;
     ProtectedBlock* recoveryBuffer = new ProtectedBlock[fileHeader.m_cm256Params.OriginalCount];
     cm256_block rxDescriptorBlocks[fileHeader.m_cm256Params.OriginalCount];
@@ -154,7 +154,7 @@ bool example0_rx(const std::string& filename, const std::string& refFilename)
         bool compOKi = true;
         bool compOKq = true;
 
-        for (int k = 0; k < samplesPerBlock; k++)
+        for (int k = 0; k < nbSamplesPerBlock; k++)
         {
             if (retrievedDataBuffer[i].samples[k].i != refBuffer[i].protectedBlock.samples[k].i)
             {

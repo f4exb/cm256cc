@@ -96,7 +96,9 @@ target_link_libraries(cm256_test cm256)
 
 add_executable(cm256_tx
   unit_test/mainutils.cpp
+  unit_test/UDPSocket.cpp
   unit_test/example0.cpp  
+  unit_test/example1.cpp  
   unit_test/transmit.cpp
 )
 

@@ -26,37 +26,34 @@
     POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef UNIT_TEST_DATA_H_
-#define UNIT_TEST_DATA_H_
+#ifndef UNIT_TEST_EXAMPLE1_H_
+#define UNIT_TEST_EXAMPLE1_H_
 
-#pragma pack(push, 1)
-    struct Sample
-    {
-        uint16_t i;
-        uint16_t q;
-    };
-    struct Header
-    {
-        uint16_t frameIndex;
-        uint8_t  blockIndex;
-        uint8_t  filler;
-    };
+#include <string>
+#include <atomic>
+#include "data.h"
+#include "../cm256.h"
+#include "UDPSocket.h"
 
-    static const int udpSize = 512;
-    static const int nbSamplesPerBlock = (512 - sizeof(Header)) / sizeof(Sample);
-    static const int nbOriginalBlocks = 128;
-    static const int nbRecoveryBlocks = 26;
+class Example1
+{
+public:
+    Example1(int samplesPerBlock, int nbOriginalBlocks, int nbFecBlocks);
+    ~Example1();
 
-    struct ProtectedBlock
-    {
-        Sample samples[nbSamplesPerBlock];
-    };
-    struct SuperBlock
-    {
-        Header         header;
-        ProtectedBlock protectedBlock;
-    };
-#pragma pack(pop)
+    void makeDataBlocks(SuperBlock *txBlocks, uint16_t frameNumber);
+    bool makeFecBlocks(SuperBlock *txBlocks, uint16_t frameInde);
+    void transmitBlocks(SuperBlock *txBlocks, const std::string& destaddress, int destport, int txDelay);
+
+protected:
+    cm256_encoder_params m_params;
+    cm256_block m_txDescriptorBlocks[256];
+    ProtectedBlock m_txRecovery[128];
+    UDPSocket m_socket;
+};
 
 
-#endif /* UNIT_TEST_DATA_H_ */
+bool example1_tx(const std::string& dataaddress, int dataport, std::atomic_bool& stopFlag);
+bool example1_rx(const std::string& dataaddress, int dataport, std::atomic_bool& stopFlag);
+
+#endif /* UNIT_TEST_EXAMPLE1_H_ */
