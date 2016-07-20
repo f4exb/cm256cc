@@ -30,35 +30,12 @@
 #include <fstream>
 
 #include "mainutils.h"
+#include "data.h"
 #include "../cm256.h"
 
 bool example0_rx(const std::string& filename, const std::string& refFilename)
 {
 #pragma pack(push, 1)
-    struct Sample
-    {
-        uint16_t i;
-        uint16_t q;
-    };
-    struct Header
-    {
-        uint16_t frameIndex;
-        uint8_t  blockIndex;
-        uint8_t  filler;
-    };
-
-    static const int samplesPerBlock = (512 - sizeof(Header)) / sizeof(Sample);
-
-    struct ProtectedBlock
-    {
-        Sample samples[samplesPerBlock];
-    };
-    struct SuperBlock
-    {
-        Header         header;
-        ProtectedBlock protectedBlock;
-    };
-
     struct FileHeader
     {
         cm256_encoder_params m_cm256Params;
