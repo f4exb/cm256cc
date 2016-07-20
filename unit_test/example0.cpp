@@ -125,6 +125,9 @@ bool example0_rx(const std::string& filename, const std::string& refFilename)
                     retrievedDataBuffer[blockIndex] = recoveryBuffer[ir];
                     std::cerr << ir << ":" << blockIndex << ": " << recoveryBuffer[ir].samples[0].i << std::endl;
                 }
+
+                std::cerr << "Decoded in " << usecs << " microseconds" << std::endl;
+
             }
         }
     }
