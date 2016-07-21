@@ -100,6 +100,8 @@ bool example1_tx(const std::string& dataaddress, int dataport, std::atomic_bool&
     SuperBlock txBlocks[256];
     Example1 ex1(nbSamplesPerBlock, nbOriginalBlocks, nbRecoveryBlocks);
 
+    std::cerr << "example1_tx: transmitting on address: " << dataaddress << " port: " << dataport << std::endl;
+
     for (uint16_t frameNumber = 0; !stopFlag.load(); frameNumber++)
     {
         ex1.makeDataBlocks(txBlocks, frameNumber);
@@ -111,6 +113,7 @@ bool example1_tx(const std::string& dataaddress, int dataport, std::atomic_bool&
         }
 
         ex1.transmitBlocks(txBlocks, dataaddress, dataport, 300);
+        std::cerr <<  ".";
     }
 
     return true;

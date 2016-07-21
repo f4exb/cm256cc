@@ -28,10 +28,37 @@
 
 #include <iostream>
 #include <string>
+#include <atomic>
+#include <csignal>
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
+#include <unistd.h>
 #include <getopt.h>
 
 #include "mainutils.h"
 #include "example0.h"
+#include "example1.h"
+
+/** Flag is set on SIGINT / SIGTERM. */
+static std::atomic_bool stop_flag(false);
+
+/** Handle Ctrl-C and SIGTERM. */
+static void handle_sigterm(int sig)
+{
+    stop_flag.store(true);
+
+    std::string msg = "\nGot signal ";
+    msg += strsignal(sig);
+    msg += ", stopping ...\n";
+
+    const char *s = msg.c_str();
+    ssize_t r = write(STDERR_FILENO, s, strlen(s));
+
+    if (r != (ssize_t) strlen(s)) {
+        msg += " write incomplete";
+    }
+}
 
 static void usage()
 {
@@ -129,6 +156,18 @@ int main(int argc, char *argv[])
         }
 
         std::cerr << "example0 successful" << std::endl;
+    }
+    else if (testCaseIndex == 1)
+    {
+    	std::cerr << "example1:" << std::endl;
+
+        if (!example1_tx(dataaddress, dataport, stop_flag))
+        {
+            std::cerr << "example1 failed" << std::endl << std::endl;
+            return 1;
+        }
+
+        std::cerr << "example1 successful" << std::endl;
     }
 
     return 0;
