@@ -35,11 +35,11 @@
 #include "../cm256.h"
 #include "UDPSocket.h"
 
-class Example1
+class Example1Tx
 {
 public:
-    Example1(int samplesPerBlock, int nbOriginalBlocks, int nbFecBlocks);
-    ~Example1();
+    Example1Tx(int samplesPerBlock, int nbOriginalBlocks, int nbFecBlocks);
+    ~Example1Tx();
 
     void makeDataBlocks(SuperBlock *txBlocks, uint16_t frameNumber);
     bool makeFecBlocks(SuperBlock *txBlocks, uint16_t frameInde);
@@ -52,8 +52,30 @@ protected:
     UDPSocket m_socket;
 };
 
+class Example1Rx
+{
+public:
+    Example1Rx(int samplesPerBlock, int nbOriginalBlocks, int nbFecBlocks);
+    ~Example1Rx();
+
+    void processBlock(SuperBlock& superBlock);
+
+private:
+    uint16_t m_frameHead;
+    uint64_t m_frameCount;
+    int m_blockCount;
+    bool m_metaReceived;
+    int m_dataCount;
+    int m_recoveryCount;
+    bool m_cm256_OK;
+    MetaDataFEC m_currentMeta;
+    cm256_encoder_params m_params;
+    cm256_block m_descriptorBlocks[256];
+    ProtectedBlock m_data[128];
+    ProtectedBlock m_recovery[128];
+};
 
 bool example1_tx(const std::string& dataaddress, int dataport, std::atomic_bool& stopFlag);
-bool example1_rx(const std::string& dataaddress, int dataport, std::atomic_bool& stopFlag);
+bool example1_rx(const std::string& dataaddress, unsigned short dataport, std::atomic_bool& stopFlag);
 
 #endif /* UNIT_TEST_EXAMPLE1_H_ */
