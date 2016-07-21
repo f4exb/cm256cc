@@ -29,6 +29,8 @@
 #ifndef UNIT_TEST_DATA_H_
 #define UNIT_TEST_DATA_H_
 
+#include <string.h>
+
 #pragma pack(push, 1)
     struct Sample
     {
@@ -55,6 +57,28 @@
     {
         Header         header;
         ProtectedBlock protectedBlock;
+    };
+
+    struct MetaDataFEC
+    {
+        uint32_t m_centerFrequency;   //!<  4 center frequency in kHz
+        uint32_t m_sampleRate;        //!<  8 sample rate in Hz
+        uint8_t  m_sampleBytes;       //!<  9 MSB(4): indicators, LSB(4) number of bytes per sample
+        uint8_t  m_sampleBits;        //!< 10 number of effective bits per sample
+        uint8_t  m_nbOriginalBlocks;  //!< 11 number of blocks with original (protected) data
+        uint8_t  m_nbFECBlocks;       //!< 12 number of blocks carrying FEC
+        uint32_t m_tv_sec;            //!< 16 seconds of timestamp at start time of super-frame processing
+        uint32_t m_tv_usec;           //!< 20 microseconds of timestamp at start time of super-frame processing
+
+        bool operator==(const MetaDataFEC& rhs)
+        {
+            return (memcmp((const void *) this, (const void *) &rhs, 12) == 0); // Only the 12 first bytes are relevant
+        }
+
+        void init()
+        {
+            memset((void *) this, 0, sizeof(MetaDataFEC));
+        }
     };
 #pragma pack(pop)
 

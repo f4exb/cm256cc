@@ -29,6 +29,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <unistd.h>
+#include <sys/time.h>
 
 #include "example1.h"
 
@@ -53,34 +54,51 @@ void Example1::makeDataBlocks(SuperBlock *txBlocks, uint16_t frameNumber)
         txBlocks[iblock].header.frameIndex = frameNumber;
         txBlocks[iblock].header.blockIndex = (uint8_t) iblock;
 
-        for (int isample = 0; isample < nbSamplesPerBlock; isample++)
+        if (iblock == 0) // meta data
         {
-            txBlocks[iblock].protectedBlock.samples[isample].i = rand();
-            txBlocks[iblock].protectedBlock.samples[isample].q = rand();
+        	MetaDataFEC *metaData = (MetaDataFEC *) &txBlocks[iblock].protectedBlock;
+        	metaData->init();
+        	metaData->m_nbOriginalBlocks = m_params.OriginalCount;
+        	metaData->m_nbFECBlocks = m_params.RecoveryCount;
+            struct timeval tv;
+            gettimeofday(&tv, 0);
+            metaData->m_tv_sec = tv.tv_sec;
+            metaData->m_tv_usec = tv.tv_usec;
+        }
+        else
+        {
+            for (int isample = 0; isample < nbSamplesPerBlock; isample++)
+            {
+                txBlocks[iblock].protectedBlock.samples[isample].i = rand();
+                txBlocks[iblock].protectedBlock.samples[isample].q = rand();
+            }
         }
     }
 }
 
 bool Example1::makeFecBlocks(SuperBlock *txBlocks, uint16_t frameIndex)
 {
-    for (int i = 0; i < m_params.OriginalCount; i++)
-    {
-        m_txDescriptorBlocks[i].Block = (void *) &txBlocks[i].protectedBlock;
-        m_txDescriptorBlocks[i].Index = i;
-    }
+	if (m_params.RecoveryCount > 0)
+	{
+	    for (int i = 0; i < m_params.OriginalCount; i++)
+	    {
+	        m_txDescriptorBlocks[i].Block = (void *) &txBlocks[i].protectedBlock;
+	        m_txDescriptorBlocks[i].Index = i;
+	    }
 
-    if (cm256_encode(m_params, m_txDescriptorBlocks, m_txRecovery))
-    {
-        std::cerr << "example2: encode failed" << std::endl;
-        return false;
-    }
+	    if (cm256_encode(m_params, m_txDescriptorBlocks, m_txRecovery))
+	    {
+	        std::cerr << "example2: encode failed" << std::endl;
+	        return false;
+	    }
 
-    for (int i = 0; i < m_params.RecoveryCount; i++)
-    {
-        txBlocks[i + m_params.OriginalCount].header.blockIndex = i + m_params.OriginalCount;
-        txBlocks[i + m_params.OriginalCount].header.frameIndex = frameIndex;
-        txBlocks[i + m_params.OriginalCount].protectedBlock = m_txRecovery[i];
-    }
+	    for (int i = 0; i < m_params.RecoveryCount; i++)
+	    {
+	        txBlocks[i + m_params.OriginalCount].header.blockIndex = i + m_params.OriginalCount;
+	        txBlocks[i + m_params.OriginalCount].header.frameIndex = frameIndex;
+	        txBlocks[i + m_params.OriginalCount].protectedBlock = m_txRecovery[i];
+	    }
+	}
 
     return true;
 }
@@ -113,6 +131,7 @@ bool example1_tx(const std::string& dataaddress, int dataport, std::atomic_bool&
         }
 
         ex1.transmitBlocks(txBlocks, dataaddress, dataport, 300);
+
         std::cerr <<  ".";
     }
 
