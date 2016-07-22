@@ -38,11 +38,17 @@ Example1Tx::Example1Tx(int samplesPerBlock, int nbOriginalBlocks, int nbFecBlock
     m_params.BlockBytes = samplesPerBlock * sizeof(Sample);
     m_params.OriginalCount = nbOriginalBlocks;
     m_params.RecoveryCount = nbFecBlocks;
+
+    if (cm256_init()) {
+        m_cm256_OK = false;
+        std::cerr << "Example1Tx::Example1Tx: cannot initialize CM256 library" << std::endl;
+    } else {
+        m_cm256_OK = true;
+    }
 }
 
 Example1Tx::~Example1Tx()
 {
-
 }
 
 void Example1Tx::makeDataBlocks(SuperBlock *txBlocks, uint16_t frameNumber)
@@ -86,27 +92,42 @@ bool Example1Tx::makeFecBlocks(SuperBlock *txBlocks, uint16_t frameIndex)
 	        m_txDescriptorBlocks[i].Index = i;
 	    }
 
-	    if (cm256_encode(m_params, m_txDescriptorBlocks, m_txRecovery))
+	    if (m_cm256_OK)
 	    {
-	        std::cerr << "example2: encode failed" << std::endl;
-	        return false;
-	    }
+	        if (cm256_encode(m_params, m_txDescriptorBlocks, m_txRecovery))
+	        {
+	            std::cerr << "example2: encode failed" << std::endl;
+	            return false;
+	        }
 
-	    for (int i = 0; i < m_params.RecoveryCount; i++)
-	    {
-	        txBlocks[i + m_params.OriginalCount].header.blockIndex = i + m_params.OriginalCount;
-	        txBlocks[i + m_params.OriginalCount].header.frameIndex = frameIndex;
-	        txBlocks[i + m_params.OriginalCount].protectedBlock = m_txRecovery[i];
+	        for (int i = 0; i < m_params.RecoveryCount; i++)
+	        {
+	            txBlocks[i + m_params.OriginalCount].header.blockIndex = i + m_params.OriginalCount;
+	            txBlocks[i + m_params.OriginalCount].header.frameIndex = frameIndex;
+	            txBlocks[i + m_params.OriginalCount].protectedBlock = m_txRecovery[i];
+	        }
 	    }
 	}
 
     return true;
 }
 
-void Example1Tx::transmitBlocks(SuperBlock *txBlocks, const std::string& destaddress, int destport, int txDelay)
+void Example1Tx::transmitBlocks(SuperBlock *txBlocks,
+        const std::string& destaddress,
+        int destport,
+        std::vector<int>& blockExclusionList,
+        int txDelay)
 {
+    std::vector<int>::iterator exclusionIt = blockExclusionList.begin();
+
     for (int i = 0; i < m_params.OriginalCount + m_params.RecoveryCount; i++)
     {
+        if ((exclusionIt != blockExclusionList.end()) && (*exclusionIt == i))
+        {
+            ++exclusionIt;
+            continue;
+        }
+
         m_socket.SendDataGram((const void *) &txBlocks[i], (int) udpSize, destaddress, destport);
         usleep(txDelay);
     }
@@ -178,6 +199,27 @@ void Example1Rx::processBlock(SuperBlock& superBlock)
 
                 m_metaReceived = true;
             }
+
+//            if (blockIndex == 1)
+//            {
+//              std::srand(superBlock.header.frameIndex);
+//              std::cerr << "Example1Rx::processBlock: " << superBlock.header.frameIndex << ": ";
+//
+//              for (int k = 0; k < 2; k++)
+//              {
+//                  uint16_t refI = std::rand();
+//                  uint16_t refQ = std::rand();
+//
+//                  std::cerr  << "[" << k << "] " << m_data[blockIndex].samples[k].i
+//                          << "/" << m_data[blockIndex].samples[k].q
+//                          << " " << refI
+//                          << "/" << refQ
+//                          << " ";
+//              }
+//
+//              std::cerr << std::endl;
+//            }
+
         }
         else // recovery data
         {
@@ -200,14 +242,19 @@ void Example1Rx::processBlock(SuperBlock& superBlock)
             }
             else // success to decode
             {
+                std::cerr << "Example1Rx::processBlock: CM256 decode success: ";
+
                 int recoveryStart = m_dataCount;
 
                 for (int ir = 0; ir < m_recoveryCount; ir++)
                 {
                     int blockIndex = m_descriptorBlocks[recoveryStart + ir].Index;
-                    m_data[blockIndex] = *((ProtectedBlock *) &m_recovery[ir]);
+                    std::cerr << blockIndex << " ";
+                    m_data[blockIndex] = *((ProtectedBlock *) m_descriptorBlocks[recoveryStart + ir].Block);
                     m_dataCount++;
                 }
+
+                std::cerr << std::endl;
             }
         }
 
@@ -225,7 +272,7 @@ bool Example1Rx::checkData()
 
     std::srand(m_frameHead);
 
-    for (int i = 0; i < m_params.OriginalCount; i++)
+    for (int i = 1; i < m_params.OriginalCount; i++)
     {
         compOKi = true;
         compOKq = true;
@@ -271,7 +318,7 @@ bool Example1Rx::checkData()
     }
 }
 
-bool example1_tx(const std::string& dataaddress, int dataport, std::atomic_bool& stopFlag)
+bool example1_tx(const std::string& dataaddress, int dataport, std::vector<int> &blockExclusionList, std::atomic_bool& stopFlag)
 {
     SuperBlock txBlocks[256];
     Example1Tx ex1(nbSamplesPerBlock, nbOriginalBlocks, nbRecoveryBlocks);
@@ -288,7 +335,7 @@ bool example1_tx(const std::string& dataaddress, int dataport, std::atomic_bool&
             break;
         }
 
-        ex1.transmitBlocks(txBlocks, dataaddress, dataport, 300);
+        ex1.transmitBlocks(txBlocks, dataaddress, dataport, blockExclusionList, 300);
 
         std::cerr <<  ".";
     }
@@ -326,28 +373,7 @@ bool example1_rx(const std::string& dataaddress, unsigned short dataport, std::a
             usleep(10);
         }
 
-        //memcpy((void *) &rxBlock, (const void *) rawBlock, sizeof(SuperBlock));
         rxBlock = *((SuperBlock *) rawBlock);
-
-        if (rxBlock.header.blockIndex == 1)
-        {
-        	std::srand(rxBlock.header.frameIndex);
-        	std::cerr << "example1_rx: " << rxBlock.header.frameIndex << ": ";
-
-        	for (int k = 0; k < 2; k++)
-        	{
-        		uint16_t refI = std::rand();
-        		uint16_t refQ = std::rand();
-
-        		std::cerr  << "[" << k << "] " << rxBlock.protectedBlock.samples[k].i
-            			<< "/" << rxBlock.protectedBlock.samples[k].q
-    					<< " " << refI
-            			<< "/" << refQ
-						<< " ";
-        	}
-
-        	std::cerr << std::endl;
-        }
-        //ex1.processBlock(rxBlock);
+        ex1.processBlock(rxBlock);
     }
 }

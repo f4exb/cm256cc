@@ -64,6 +64,8 @@ else()
     return()
 endif()
 
+find_package(Boost)
+
 set(cm256_SOURCES
   cm256.cpp
   gf256.cpp

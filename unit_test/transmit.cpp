@@ -65,6 +65,8 @@ static void usage()
     fprintf(stderr,
     "Usage: cm256_tx [options]\n"
     "\n"
+    "  -x list        Comma separated list of block index to remove from transmission\n"
+    "                 this is to simulate data loss\n"
     "  -c case        Test case index\n"
     "     - 0: file test:\n"
     "  -f file        test file\n"
@@ -82,8 +84,11 @@ int main(int argc, char *argv[])
     int dataport = 9090;
     std::string filename("cm256.test");
     std::string refFilename("cm256.ref.test");
+    std:;string blockExclusionStr;
+    std::vector<int> blocExclusionList;
 
     const struct option longopts[] = {
+        { "exlist",     2, NULL, 'x' },
         { "case",       1, NULL, 'c' },
         { "daddress",   2, NULL, 'I' },
         { "dport",      1, NULL, 'P' },
@@ -93,11 +98,30 @@ int main(int argc, char *argv[])
 
     int c, longindex, value;
     while ((c = getopt_long(argc, argv,
-            "c:I:P:f:r:",
+            "x:c:I:P:f:r:",
             longopts, &longindex)) >= 0)
     {
         switch (c)
         {
+        case 'x':
+            blockExclusionStr.assign(optarg);
+            if (!getIntList(blocExclusionList, blockExclusionStr))
+            {
+                fprintf(stderr, "ERROR: Invalid block exclusion list\n");
+                exit(1);
+            }
+            else
+            {
+                std::cerr << "Exclude:";
+
+                for (std::vector<int>::iterator it = blocExclusionList.begin(); it != blocExclusionList.end(); ++it)
+                {
+                    std::cerr << " " << *it;
+                }
+
+                std::cerr << std::endl;
+            }
+            break;
         case 'c':
             if (!parse_int(optarg, value) || (value < 0) || (value > 1))
             {
@@ -161,7 +185,7 @@ int main(int argc, char *argv[])
     {
     	std::cerr << "example1:" << std::endl;
 
-        if (!example1_tx(dataaddress, dataport, stop_flag))
+        if (!example1_tx(dataaddress, dataport, blocExclusionList, stop_flag))
         {
             std::cerr << "example1 failed" << std::endl << std::endl;
             return 1;

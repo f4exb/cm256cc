@@ -29,9 +29,12 @@
 #ifndef UNIT_TEST_MAINUTILS_H_
 #define UNIT_TEST_MAINUTILS_H_
 
+#include <vector>
+#include <string>
+
 long long getUSecs();
 bool parse_int(const char *s, int& v, bool allow_unit=false);
 void badarg(const char *label);
-
+bool getIntList(std::vector<int>& listInt, std::string& listString);
 
 #endif /* UNIT_TEST_MAINUTILS_H_ */

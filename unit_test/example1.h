@@ -31,6 +31,7 @@
 
 #include <string>
 #include <atomic>
+#include <vector>
 #include "data.h"
 #include "../cm256.h"
 #include "UDPSocket.h"
@@ -43,9 +44,14 @@ public:
 
     void makeDataBlocks(SuperBlock *txBlocks, uint16_t frameNumber);
     bool makeFecBlocks(SuperBlock *txBlocks, uint16_t frameInde);
-    void transmitBlocks(SuperBlock *txBlocks, const std::string& destaddress, int destport, int txDelay);
+    void transmitBlocks(SuperBlock *txBlocks,
+            const std::string& destaddress,
+            int destport,
+            std::vector<int>& blockExclusionList,
+            int txDelay);
 
 protected:
+    bool m_cm256_OK;
     cm256_encoder_params m_params;
     cm256_block m_txDescriptorBlocks[256];
     ProtectedBlock m_txRecovery[128];
@@ -77,7 +83,7 @@ private:
     ProtectedBlock m_recovery[128];
 };
 
-bool example1_tx(const std::string& dataaddress, int dataport, std::atomic_bool& stopFlag);
+bool example1_tx(const std::string& dataaddress, int dataport, std::vector<int> &blockExclusionList, std::atomic_bool& stopFlag);
 bool example1_rx(const std::string& dataaddress, unsigned short dataport, std::atomic_bool& stopFlag);
 
 #endif /* UNIT_TEST_EXAMPLE1_H_ */
