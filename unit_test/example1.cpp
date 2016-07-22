@@ -110,6 +110,8 @@ void Example1Tx::transmitBlocks(SuperBlock *txBlocks, const std::string& destadd
         m_socket.SendDataGram((const void *) &txBlocks[i], (int) udpSize, destaddress, destport);
         usleep(txDelay);
     }
+
+    usleep(100*txDelay); // wait at end of frame to let Rx process it
 }
 
 Example1Rx::Example1Rx(int samplesPerBlock, int nbOriginalBlocks, int nbFecBlocks) :
@@ -211,9 +213,54 @@ void Example1Rx::processBlock(SuperBlock& superBlock)
 
         if (m_dataCount == nbOriginalBlocks)
         {
-            // TODO: check result
+            checkData();
         }
     }
+}
+
+bool Example1Rx::checkData()
+{
+    bool compOKi = true;
+    bool compOKq = true;
+
+    std::srand(m_frameHead);
+
+    for (int i = 0; i < m_params.OriginalCount; i++)
+    {
+        compOKi = true;
+        compOKq = true;
+
+        for (int k = 0; k < nbSamplesPerBlock; k++)
+        {
+            uint16_t refI = rand();
+            uint16_t refQ = rand();
+
+            if (m_data[i].samples[k].i != refI)
+            {
+                std::cerr << i << ": error: " << k << ": i: " << m_data[i].samples[k].i << "/" << refI << std::endl;
+                compOKi = false;
+                break;
+            }
+
+            if (m_data[i].samples[k].q != refQ)
+            {
+                std::cerr << i << ": error: " << k << ": q: " << m_data[i].samples[k].q << "/" << refQ << std::endl;
+                compOKq = false;
+                break;
+            }
+        }
+
+        if (compOKi && compOKq)
+        {
+            std::cerr << i << ": OK" << std::endl;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return (compOKi && compOKq);
 }
 
 bool example1_tx(const std::string& dataaddress, int dataport, std::atomic_bool& stopFlag)

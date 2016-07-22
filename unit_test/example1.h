@@ -61,6 +61,8 @@ public:
     void processBlock(SuperBlock& superBlock);
 
 private:
+    bool checkData();
+
     uint16_t m_frameHead;
     uint64_t m_frameCount;
     int m_blockCount;
