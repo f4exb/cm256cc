@@ -253,8 +253,8 @@ bool example0_tx(const std::string& filename, const std::string& refFilename)
         {
             for (int k = 0; k < samplesPerBlock; k++)
             {
-                txBuffer[i].protectedBlock.samples[k].i = rand();
-                txBuffer[i].protectedBlock.samples[k].q = rand();
+                txBuffer[i].protectedBlock.samples[k].i = std::rand();
+                txBuffer[i].protectedBlock.samples[k].q = std::rand();
             }
         }
         else

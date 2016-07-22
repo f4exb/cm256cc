@@ -67,11 +67,11 @@ void Example1Tx::makeDataBlocks(SuperBlock *txBlocks, uint16_t frameNumber)
         }
         else
         {
-            for (int isample = 0; isample < nbSamplesPerBlock; isample++)
-            {
-                txBlocks[iblock].protectedBlock.samples[isample].i = rand();
-                txBlocks[iblock].protectedBlock.samples[isample].q = rand();
-            }
+			for (int isample = 0; isample < nbSamplesPerBlock; isample++)
+			{
+				txBlocks[iblock].protectedBlock.samples[isample].i = std::rand();
+				txBlocks[iblock].protectedBlock.samples[isample].q = std::rand();
+			}
         }
     }
 }
@@ -143,7 +143,7 @@ void Example1Rx::processBlock(SuperBlock& superBlock)
 {
     if (superBlock.header.frameIndex != m_frameHead)
     {
-        if (m_dataCount != nbOriginalBlocks)
+        if (m_dataCount != m_params.OriginalCount)
         {
             std::cerr << "Example1Rx::processBlock: incomplete frame" << std::endl;
         }
@@ -156,11 +156,11 @@ void Example1Rx::processBlock(SuperBlock& superBlock)
         m_frameHead = superBlock.header.frameIndex;
     }
 
-    if (m_blockCount < nbOriginalBlocks) // not enough to decode => store data
+    if (m_blockCount < m_params.OriginalCount) // not enough to decode => store data
     {
         int blockIndex = superBlock.header.blockIndex;
 
-        if (blockIndex < nbOriginalBlocks) // data
+        if (blockIndex < m_params.OriginalCount) // data
         {
             m_data[blockIndex] = superBlock.protectedBlock;
             m_descriptorBlocks[m_blockCount].Block = (void *) &m_data[blockIndex];
@@ -181,7 +181,7 @@ void Example1Rx::processBlock(SuperBlock& superBlock)
         }
         else // recovery data
         {
-            m_recovery[m_recoveryCount] = superBlock.protectedBlock;
+        	m_recovery[m_recoveryCount] = superBlock.protectedBlock;
             m_descriptorBlocks[m_blockCount].Block = (void *) &m_recovery[m_recoveryCount];
             m_descriptorBlocks[m_blockCount].Index = blockIndex;
             m_recoveryCount++;
@@ -190,7 +190,7 @@ void Example1Rx::processBlock(SuperBlock& superBlock)
 
     m_blockCount++;
 
-    if (m_blockCount == nbOriginalBlocks) // enough data is received
+    if (m_blockCount == m_params.OriginalCount) // enough data is received
     {
         if (m_cm256_OK && (m_recoveryCount > 0)) // FEC necessary
         {
@@ -205,13 +205,13 @@ void Example1Rx::processBlock(SuperBlock& superBlock)
                 for (int ir = 0; ir < m_recoveryCount; ir++)
                 {
                     int blockIndex = m_descriptorBlocks[recoveryStart + ir].Index;
-                    m_data[blockIndex] = m_recovery[ir];
+                    m_data[blockIndex] = *((ProtectedBlock *) &m_recovery[ir]);
                     m_dataCount++;
                 }
             }
         }
 
-        if (m_dataCount == nbOriginalBlocks)
+        if (m_dataCount == m_params.OriginalCount)
         {
             checkData();
         }
@@ -232,8 +232,8 @@ bool Example1Rx::checkData()
 
         for (int k = 0; k < nbSamplesPerBlock; k++)
         {
-            uint16_t refI = rand();
-            uint16_t refQ = rand();
+            uint16_t refI = std::rand();
+            uint16_t refQ = std::rand();
 
             if (m_data[i].samples[k].i != refI)
             {
@@ -252,7 +252,7 @@ bool Example1Rx::checkData()
 
         if (compOKi && compOKq)
         {
-            std::cerr << i << ": OK" << std::endl;
+            std::cerr << ".";
         }
         else
         {
@@ -260,7 +260,15 @@ bool Example1Rx::checkData()
         }
     }
 
-    return (compOKi && compOKq);
+    if (compOKi && compOKq)
+    {
+    	std::cerr << "OK" << std::endl;
+    	return true;
+    }
+    else
+    {
+    	return false;
+    }
 }
 
 bool example1_tx(const std::string& dataaddress, int dataport, std::atomic_bool& stopFlag)
@@ -293,19 +301,53 @@ bool example1_rx(const std::string& dataaddress, unsigned short dataport, std::a
     SuperBlock rxBlock;
     uint8_t rawBlock[sizeof(SuperBlock)];
     int rawBlockSize;
-    UDPSocket rxSocket;
-    std::string dataaddress2(dataaddress);
+    UDPSocket rxSocket(dataport);
+    std::string senderaddress, senderaddress0;
+    unsigned short senderport, senderport0 = 0;
+    Example1Rx ex1(nbSamplesPerBlock, nbOriginalBlocks, nbRecoveryBlocks);
+
+    std::cerr << "example1_rx: receiving on address: " << dataaddress << " port: " << (int) dataport << std::endl;
 
     while (!stopFlag.load())
     {
         rawBlockSize = 0;
 
-        while (rawBlockSize != sizeof(SuperBlock))
+        while (rawBlockSize < sizeof(SuperBlock))
         {
-            rawBlockSize += rxSocket.RecvDataGram((void *) &rawBlock[rawBlockSize], (int) sizeof(SuperBlock), dataaddress2, dataport);
+            rawBlockSize += rxSocket.RecvDataGram((void *) &rawBlock[rawBlockSize], (int) sizeof(SuperBlock), senderaddress, senderport);
+
+            if ((senderaddress != senderaddress0) || (senderport != senderport0))
+            {
+            	std::cerr << "example1_rx: connected to: " << senderaddress << ":" << senderport << std::endl;
+            	senderaddress0 = senderaddress;
+            	senderport0 = senderport;
+            }
+
             usleep(10);
         }
 
-        memcpy((void *) &rxBlock, (const void *) rawBlock, sizeof(SuperBlock));
+        //memcpy((void *) &rxBlock, (const void *) rawBlock, sizeof(SuperBlock));
+        rxBlock = *((SuperBlock *) rawBlock);
+
+        if (rxBlock.header.blockIndex == 1)
+        {
+        	std::srand(rxBlock.header.frameIndex);
+        	std::cerr << "example1_rx: " << rxBlock.header.frameIndex << ": ";
+
+        	for (int k = 0; k < 2; k++)
+        	{
+        		uint16_t refI = std::rand();
+        		uint16_t refQ = std::rand();
+
+        		std::cerr  << "[" << k << "] " << rxBlock.protectedBlock.samples[k].i
+            			<< "/" << rxBlock.protectedBlock.samples[k].q
+    					<< " " << refI
+            			<< "/" << refQ
+						<< " ";
+        	}
+
+        	std::cerr << std::endl;
+        }
+        //ex1.processBlock(rxBlock);
     }
 }
