@@ -13,7 +13,7 @@ SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 # which point to directories outside the build tree to the install RPATH
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-project(cm256)
+project(cm256cc)
 
 if (BUILD_TYPE MATCHES RELEASE)
     set(CMAKE_BUILD_TYPE "Release")
@@ -77,14 +77,14 @@ set(cm256_HEADERS
   sse2neon.h
 )
 
-add_library(cm256 SHARED
+add_library(cm256cc SHARED
   ${cm256_SOURCES}
 )
 
 # single pass test
 
 add_executable(cm256_test
-  unit_test/maingcc.cpp
+  unit_test/cm256_test.cpp
 )
 
 target_include_directories(cm256_test PUBLIC
@@ -92,7 +92,7 @@ target_include_directories(cm256_test PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-target_link_libraries(cm256_test cm256)
+target_link_libraries(cm256_test cm256cc)
 
 # transmit side test
 
@@ -109,7 +109,7 @@ target_include_directories(cm256_tx PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-target_link_libraries(cm256_tx cm256)
+target_link_libraries(cm256_tx cm256cc)
 
 # receive side test
 
@@ -126,10 +126,10 @@ target_include_directories(cm256_rx PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-target_link_libraries(cm256_rx cm256)
+target_link_libraries(cm256_rx cm256cc)
 
 # Installation
 
 install(TARGETS cm256_test cm256_tx cm256_rx DESTINATION bin)
-install(TARGETS cm256 DESTINATION lib)
+install(TARGETS cm256cc DESTINATION lib)
 install(FILES ${cm256_HEADERS} DESTINATION include/${PROJECT_NAME})

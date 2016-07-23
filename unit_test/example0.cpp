@@ -38,15 +38,12 @@ bool example0_rx(const std::string& filename, const std::string& refFilename)
 #pragma pack(push, 1)
     struct FileHeader
     {
-        cm256_encoder_params m_cm256Params;
+        CM256::cm256_encoder_params m_cm256Params;
         int m_txBlocks;
     };
 #pragma pack(pop)
 
-    if (cm256_init())
-    {
-        return false;
-    }
+    CM256 cm256;
 
     std::ifstream rxFile;
     rxFile.open(filename.c_str(), std::ios::in | std::ios::binary);
@@ -74,7 +71,7 @@ bool example0_rx(const std::string& filename, const std::string& refFilename)
     Sample *samplesBuffer = new Sample[nbSamplesPerBlock * (fileHeader.m_cm256Params.OriginalCount)];
     ProtectedBlock* retrievedDataBuffer = (ProtectedBlock *) samplesBuffer;
     ProtectedBlock* recoveryBuffer = new ProtectedBlock[fileHeader.m_cm256Params.OriginalCount];
-    cm256_block rxDescriptorBlocks[fileHeader.m_cm256Params.OriginalCount];
+    CM256::cm256_block rxDescriptorBlocks[fileHeader.m_cm256Params.OriginalCount];
     int recoveryCount = 0;
     int nbBlocks = 0;
 
@@ -107,7 +104,7 @@ bool example0_rx(const std::string& filename, const std::string& refFilename)
             {
                 long long ts = getUSecs();
 
-                if (cm256_decode(fileHeader.m_cm256Params, rxDescriptorBlocks))
+                if (cm256.cm256_decode(fileHeader.m_cm256Params, rxDescriptorBlocks))
                 {
                     delete[] rxBuffer;
                     delete[] samplesBuffer;
@@ -215,17 +212,14 @@ bool example0_tx(const std::string& filename, const std::string& refFilename)
 
     struct FileHeader
     {
-        cm256_encoder_params m_cm256Params;
+        CM256::cm256_encoder_params m_cm256Params;
         int m_txBlocks;
     };
 #pragma pack(pop)
 
-    if (cm256_init())
-    {
-        return false;
-    }
+    CM256 cm256;
 
-    cm256_encoder_params params;
+    CM256::cm256_encoder_params params;
 
     // Number of bytes per file block
     params.BlockBytes = sizeof(ProtectedBlock);
@@ -238,7 +232,7 @@ bool example0_tx(const std::string& filename, const std::string& refFilename)
 
     SuperBlock txBuffer[256];
     ProtectedBlock txRecovery[256];
-    cm256_block txDescriptorBlocks[256];
+    CM256::cm256_block txDescriptorBlocks[256];
     int frameCount = 0;
 
     // Fill original data
@@ -268,7 +262,7 @@ bool example0_tx(const std::string& filename, const std::string& refFilename)
 
     long long ts = getUSecs();
 
-    if (cm256_encode(params, txDescriptorBlocks, txRecovery))
+    if (cm256.cm256_encode(params, txDescriptorBlocks, txRecovery))
     {
         std::cerr << "example2: encode failed" << std::endl;
         return false;

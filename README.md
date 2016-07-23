@@ -1,5 +1,7 @@
-# cm256
-Fast GF(256) Cauchy MDS Block Erasure Codec in C
+# cm256cc
+Fast GF(256) Cauchy MDS Block Erasure Codec in C++
+
+This is the rewrite in (as much as possible) pure C++ of [cm256](https://github.com/f4exb/cm256). In some contexts like Qt programs and plugins the original cm256 library does not work.
 
 cm256 is a simple library for erasure codes.  From given data it generates
 redundant data that can be used to recover the originals.
@@ -23,7 +25,19 @@ In this case up to 256 - 3 = 253 additional redundant packets can be generated.
 
 ##### Building: Quick Setup
 
-Include the cm256.* and gf256.* files in your project and consult the cm256.h header for usage.
+This is a classical cmake project. Make sure cmake and g++ is installed in your system. create a `build` directory and cd into it. If you install the library in a custom location say `opt/install/cm256cc` use the following command line for cmake:
+
+  - `cmake -Wno-dev -DCMAKE_INSTALL_PREFIX=/opt/install/cm256cc ..`
+  
+Result:
+
+  - Library will be installed as `/opt/install/cm256cc/lib/libcn256cc.so`
+  - Include files will be installed in `/opt/install/cm256cc/include/cm256cc`
+  - Binary test programs will be installed in `/opt/install/cm256cc/bin`
+
+##### Building: Use the library
+
+Include the cm256cc library in your project and cm256.h header in your program. Have a look at example programs `cm256_test.cpp`, `transmit.cpp`and `receive.cpp` in the `unit_test` folder for usage. Consult the `cm256.h header` for details on the encoding / decoding method.
 
 
 ## Usage

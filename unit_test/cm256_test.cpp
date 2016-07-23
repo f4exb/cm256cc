@@ -38,7 +38,7 @@ long long getUSecs()
     return (long long) tp.tv_sec * 1000000L + tp.tv_usec;
 }
 
-void initializeBlocks(cm256_block originals[256], int blockCount, int blockBytes)
+void initializeBlocks(CM256::cm256_block originals[256], int blockCount, int blockBytes)
 {
     for (int i = 0; i < blockCount; ++i)
     {
@@ -51,7 +51,7 @@ void initializeBlocks(cm256_block originals[256], int blockCount, int blockBytes
     }
 }
 
-bool validateSolution(cm256_block_t* blocks, int blockCount, int blockBytes)
+bool validateSolution(CM256::cm256_block_t* blocks, int blockCount, int blockBytes)
 {
     uint8_t seen[256] = { 0 };
 
@@ -89,12 +89,14 @@ bool validateSolution(cm256_block_t* blocks, int blockCount, int blockBytes)
 
 bool ExampleFileUsage()
 {
-    if (cm256_init())
+    CM256 cm256;
+
+    if (!cm256.isInitialized())
     {
         return false;
     }
 
-    cm256_encoder_params params;
+    CM256::cm256_encoder_params params;
 
     // Number of bytes per file block
     params.BlockBytes = 1296;
@@ -116,7 +118,7 @@ bool ExampleFileUsage()
     }
 
     // Pointers to data
-    cm256_block blocks[256];
+    CM256::cm256_block blocks[256];
     for (int i = 0; i < params.OriginalCount; ++i)
     {
         blocks[i].Block = originalFileData + i * params.BlockBytes;
@@ -126,7 +128,7 @@ bool ExampleFileUsage()
     uint8_t* recoveryBlocks = new uint8_t[params.RecoveryCount * params.BlockBytes];
 
     // Generate recovery data
-    if (cm256_encode(params, blocks, recoveryBlocks))
+    if (cm256.cm256_encode(params, blocks, recoveryBlocks))
     {
         delete[] originalFileData;
         delete[] recoveryBlocks;
@@ -136,18 +138,18 @@ bool ExampleFileUsage()
     // Initialize the indices
     for (int i = 0; i < params.OriginalCount; ++i)
     {
-        blocks[i].Index = cm256_get_original_block_index(params, i);
+        blocks[i].Index = CM256::cm256_get_original_block_index(params, i);
     }
 
     //// Simulate loss of data, substituting a recovery block in its place ////
     for (int i = 0; i < params.RecoveryCount && i < params.OriginalCount; ++i)
     {
         blocks[i].Block = recoveryBlocks + params.BlockBytes * i; // First recovery block
-        blocks[i].Index = cm256_get_recovery_block_index(params, i); // First recovery block index
+        blocks[i].Index = CM256::cm256_get_recovery_block_index(params, i); // First recovery block index
     }
     //// Simulate loss of data, substituting a recovery block in its place ////
 
-    if (cm256_decode(params, blocks))
+    if (cm256.cm256_decode(params, blocks))
     {
         delete[] originalFileData;
         delete[] recoveryBlocks;
@@ -194,12 +196,13 @@ bool example2()
     };
 #pragma pack(pop)
 
-    if (cm256_init())
+    CM256 cm256;
+    if (!cm256.isInitialized())
     {
         return false;
     }
 
-    cm256_encoder_params params;
+    CM256::cm256_encoder_params params;
 
     // Number of bytes per file block
     params.BlockBytes = sizeof(ProtectedBlock);
@@ -212,7 +215,7 @@ bool example2()
 
     SuperBlock* txBuffer = new SuperBlock[params.OriginalCount+params.RecoveryCount];
     ProtectedBlock* txRecovery = new ProtectedBlock[params.RecoveryCount];
-    cm256_block txDescriptorBlocks[params.OriginalCount+params.RecoveryCount];
+    CM256::cm256_block txDescriptorBlocks[params.OriginalCount+params.RecoveryCount];
     int frameCount = 0;
 
     // Fill original data
@@ -245,7 +248,7 @@ bool example2()
 
     long long ts = getUSecs();
 
-    if (cm256_encode(params, txDescriptorBlocks, txRecovery))
+    if (cm256.cm256_encode(params, txDescriptorBlocks, txRecovery))
     {
         std::cerr << "example2: encode failed" << std::endl;
         delete[] txBuffer;
@@ -264,7 +267,7 @@ bool example2()
     }
 
     SuperBlock* rxBuffer = new SuperBlock[params.OriginalCount];
-    cm256_block rxDescriptorBlocks[params.OriginalCount];
+    CM256::cm256_block rxDescriptorBlocks[params.OriginalCount];
     int k = 0;
 
     for (int i = 0; i < params.OriginalCount+params.RecoveryCount; i++)
@@ -283,7 +286,7 @@ bool example2()
 
     ts = getUSecs();
 
-    if (cm256_decode(params, rxDescriptorBlocks))
+    if (cm256.cm256_decode(params, rxDescriptorBlocks))
     {
         delete[] txBuffer;
         delete[] txRecovery;
@@ -342,12 +345,14 @@ bool example3()
     };
 #pragma pack(pop)
 
-    if (cm256_init())
+    CM256 cm256;
+
+    if (!cm256.isInitialized())
     {
         return false;
     }
 
-    cm256_encoder_params params;
+    CM256::cm256_encoder_params params;
 
     // Number of bytes per file block
     params.BlockBytes = sizeof(ProtectedBlock);
@@ -360,7 +365,7 @@ bool example3()
 
     SuperBlock* txBuffer = new SuperBlock[params.OriginalCount+params.RecoveryCount];
     ProtectedBlock* txRecovery = new ProtectedBlock[params.RecoveryCount];
-    cm256_block txDescriptorBlocks[params.OriginalCount+params.RecoveryCount];
+    CM256::cm256_block txDescriptorBlocks[params.OriginalCount+params.RecoveryCount];
     int frameCount = 0;
 
     // Fill original data
@@ -386,7 +391,7 @@ bool example3()
 
     long long ts = getUSecs();
 
-    if (cm256_encode(params, txDescriptorBlocks, txRecovery))
+    if (cm256.cm256_encode(params, txDescriptorBlocks, txRecovery))
     {
         std::cerr << "example2: encode failed" << std::endl;
         delete[] txBuffer;
@@ -420,7 +425,7 @@ bool example3()
     ProtectedBlock* retrievedDataBuffer = (ProtectedBlock *) samplesBuffer;
     ProtectedBlock* recoveryBuffer = new ProtectedBlock[params.OriginalCount];      // recovery blocks with maximum size
 
-    cm256_block rxDescriptorBlocks[params.OriginalCount];
+    CM256::cm256_block rxDescriptorBlocks[params.OriginalCount];
     int recoveryStartIndex;
     k = 0;
 
@@ -450,7 +455,7 @@ bool example3()
 
     ts = getUSecs();
 
-    if (cm256_decode(params, rxDescriptorBlocks))
+    if (cm256.cm256_decode(params, rxDescriptorBlocks))
     {
         delete[] txBuffer;
         delete[] txRecovery;
@@ -518,12 +523,13 @@ bool example4()
     };
 #pragma pack(pop)
 
-    if (cm256_init())
+    CM256 cm256;
+    if (!cm256.isInitialized())
     {
         return false;
     }
 
-    cm256_encoder_params params;
+    CM256::cm256_encoder_params params;
 
     // Number of bytes per file block
     params.BlockBytes = sizeof(ProtectedBlock);
@@ -536,7 +542,7 @@ bool example4()
 
     SuperBlock txBuffer[256];
     ProtectedBlock txRecovery[256];
-    cm256_block txDescriptorBlocks[256];
+    CM256::cm256_block txDescriptorBlocks[256];
     int frameCount = 0;
 
     // Fill original data
@@ -566,7 +572,7 @@ bool example4()
 
     long long ts = getUSecs();
 
-    if (cm256_encode(params, txDescriptorBlocks, txRecovery))
+    if (cm256.cm256_encode(params, txDescriptorBlocks, txRecovery))
     {
         std::cerr << "example2: encode failed" << std::endl;
         return false;
@@ -603,7 +609,7 @@ bool example4()
     ProtectedBlock* recoveryBuffer = new ProtectedBlock[params.OriginalCount];      // recovery blocks with maximum size
     bool blockZeroRetrieved = false;
 
-    cm256_block rxDescriptorBlocks[params.OriginalCount];
+    CM256::cm256_block rxDescriptorBlocks[params.OriginalCount];
     int recoveryStartIndex;
     int recoveryCount = 0;
     int nbBlocks = 0;
@@ -648,7 +654,7 @@ bool example4()
             {
                 ts = getUSecs();
 
-                if (cm256_decode(params, rxDescriptorBlocks))
+                if (cm256.cm256_decode(params, rxDescriptorBlocks))
                 {
                     delete[] rxBuffer;
                     delete[] samplesBuffer;

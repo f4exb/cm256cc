@@ -51,9 +51,10 @@ public:
             int txDelay);
 
 protected:
+    CM256 m_cm256;
     bool m_cm256_OK;
-    cm256_encoder_params m_params;
-    cm256_block m_txDescriptorBlocks[256];
+    CM256::cm256_encoder_params m_params;
+    CM256::cm256_block m_txDescriptorBlocks[256];
     ProtectedBlock m_txRecovery[128];
     UDPSocket m_socket;
 };
@@ -69,6 +70,7 @@ public:
 private:
     bool checkData();
 
+    CM256 m_cm256;
     uint16_t m_frameHead;
     uint64_t m_frameCount;
     int m_blockCount;
@@ -77,8 +79,8 @@ private:
     int m_recoveryCount;
     bool m_cm256_OK;
     MetaDataFEC m_currentMeta;
-    cm256_encoder_params m_params;
-    cm256_block m_descriptorBlocks[256];
+    CM256::cm256_encoder_params m_params;
+    CM256::cm256_block m_descriptorBlocks[256];
     ProtectedBlock m_data[128];
     ProtectedBlock m_recovery[128];
 };

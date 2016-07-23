@@ -28,33 +28,30 @@
 
 #include "gf256.h"
 
+const uint8_t gf256_ctx::GF256_GEN_POLY[GF256_GEN_POLY_COUNT] = {
+        0x8e, 0x95, 0x96, 0xa6, 0xaf, 0xb1, 0xb2, 0xb4,
+        0xb8, 0xc3, 0xc6, 0xd4, 0xe1, 0xe7, 0xf3, 0xfa,
+    };
 
-// Context object for GF(256) math
-gf256_ctx GF256Ctx;
-static bool Initialized = false;
+gf256_ctx::gf256_ctx() :
+    initialized(false)
+{
+    gf256_init_();
+}
 
-
-//-----------------------------------------------------------------------------
-// Generator Polynomial
-
-// There are only 16 irreducible polynomials for GF(256)
-static const int GF256_GEN_POLY_COUNT = 16;
-static const uint8_t GF256_GEN_POLY[GF256_GEN_POLY_COUNT] = {
-    0x8e, 0x95, 0x96, 0xa6, 0xaf, 0xb1, 0xb2, 0xb4,
-    0xb8, 0xc3, 0xc6, 0xd4, 0xe1, 0xe7, 0xf3, 0xfa,
-};
-
-static const int DefaultPolynomialIndex = 3;
+gf256_ctx::~gf256_ctx()
+{
+}
 
 // Select which polynomial to use
-static void gf255_poly_init(int polynomialIndex)
+void gf256_ctx::gf255_poly_init(int polynomialIndex)
 {
     if (polynomialIndex < 0 || polynomialIndex >= GF256_GEN_POLY_COUNT)
     {
         polynomialIndex = 0;
     }
 
-    GF256Ctx.Polynomial = (GF256_GEN_POLY[polynomialIndex] << 1) | 1;
+    Polynomial = (GF256_GEN_POLY[polynomialIndex] << 1) | 1;
 }
 
 
@@ -62,11 +59,11 @@ static void gf255_poly_init(int polynomialIndex)
 // Exponential and Log Tables
 
 // Construct EXP and LOG tables from polynomial
-static void gf256_explog_init()
+void gf256_ctx::gf256_explog_init()
 {
-    unsigned poly = GF256Ctx.Polynomial;
-    uint8_t* exptab = GF256Ctx.GF256_EXP_TABLE;
-    uint16_t* logtab = GF256Ctx.GF256_LOG_TABLE;
+    unsigned poly = Polynomial;
+    uint8_t* exptab = GF256_EXP_TABLE;
+    uint16_t* logtab = GF256_LOG_TABLE;
 
     logtab[0] = 512;
     exptab[0] = 1;
@@ -100,11 +97,11 @@ static void gf256_explog_init()
 // Multiply and Divide Tables
 
 // Initialize MUL and DIV tables using LOG and EXP tables
-static void gf256_muldiv_init()
+void gf256_ctx::gf256_muldiv_init()
 {
     // Allocate table memory 65KB x 2
-    uint8_t* m = GF256Ctx.GF256_MUL_TABLE;
-    uint8_t* d = GF256Ctx.GF256_DIV_TABLE;
+    uint8_t* m = GF256_MUL_TABLE;
+    uint8_t* d = GF256_DIV_TABLE;
 
     // Unroll y = 0 subtable
     for (int x = 0; x < 256; ++x)
@@ -116,7 +113,7 @@ static void gf256_muldiv_init()
     for (int y = 1; y < 256; ++y)
     {
         // Calculate log(y) for mult and 255 - log(y) for div
-        const uint8_t log_y = static_cast<uint8_t>(GF256Ctx.GF256_LOG_TABLE[y]);
+        const uint8_t log_y = static_cast<uint8_t>(GF256_LOG_TABLE[y]);
         const uint8_t log_yn = 255 - log_y;
 
         // Next subtable
@@ -130,10 +127,10 @@ static void gf256_muldiv_init()
         // Calculate x * y, x / y
         for (int x = 1; x < 256; ++x)
         {
-            uint16_t log_x = GF256Ctx.GF256_LOG_TABLE[x];
+            uint16_t log_x = GF256_LOG_TABLE[x];
 
-            m[x] = GF256Ctx.GF256_EXP_TABLE[log_x + log_y];
-            d[x] = GF256Ctx.GF256_EXP_TABLE[log_x + log_yn];
+            m[x] = GF256_EXP_TABLE[log_x + log_y];
+            d[x] = GF256_EXP_TABLE[log_x + log_yn];
         }
     }
 }
@@ -143,11 +140,11 @@ static void gf256_muldiv_init()
 // Inverse Table
 
 // Initialize INV table using DIV table
-static void gf256_inv_init()
+void gf256_ctx::gf256_inv_init()
 {
     for (int x = 0; x < 256; ++x)
     {
-        GF256Ctx.GF256_INV_TABLE[x] = gf256_div(1, static_cast<uint8_t>(x));
+        GF256_INV_TABLE[x] = gf256_div(1, static_cast<uint8_t>(x));
     }
 }
 
@@ -244,7 +241,7 @@ static void gf256_inv_init()
 */
 
 // Initialize the MM256 tables using gf256_mul()
-static void gf256_muladd_mem_init()
+void gf256_ctx::gf256_muladd_mem_init()
 {
     for (int y = 0; y < 256; ++y)
     {
@@ -263,35 +260,38 @@ static void gf256_muladd_mem_init()
         const GF256_M128 table_hi = _mm_set_epi8(
             hi[15], hi[14], hi[13], hi[12], hi[11], hi[10], hi[9], hi[8],
             hi[7], hi[6], hi[5], hi[4], hi[3], hi[2], hi[1], hi[0]);
-        _mm_store_si128(GF256Ctx.MM256_TABLE_LO_Y + y, table_lo);
-        _mm_store_si128(GF256Ctx.MM256_TABLE_HI_Y + y, table_hi);
+        _mm_store_si128(MM256_TABLE_LO_Y + y, table_lo);
+        _mm_store_si128(MM256_TABLE_HI_Y + y, table_hi);
     }
 }
-
 
 //-----------------------------------------------------------------------------
 // Initialization
+//
+// Initialize a context, filling in the tables.
+//
+// Thread-safety / Usage Notes:
+//
+// It is perfectly safe and encouraged to use a gf256_ctx object from multiple
+// threads.  The gf256_init() is relatively expensive and should only be done
+// once, though it will take less than a millisecond.
+//
+// The gf256_ctx object must be aligned to 16 byte boundary.
+// Simply tag the object with GF256_ALIGNED to achieve this.
+//
+// Example:
+//    static GF256_ALIGNED gf256_ctx TheGF256Context;
+//    gf256_init(&TheGF256Context, 0);
+//
+// Returns 0 on success and other values on failure.
 
-static unsigned char LittleEndianTestData[4] = { 4, 3, 2, 1 };
-static bool IsLittleEndian()
+int gf256_ctx::gf256_init_()
 {
-    return 0x01020304 == *reinterpret_cast<uint32_t*>(LittleEndianTestData);
-}
-
-int gf256_init_(int version)
-{
-    if (version != GF256_VERSION)
-    {
-        // User's header does not match library version.
-        return -1;
-    }
-
     // Avoid multiple initialization
-    if (Initialized)
+    if (initialized)
     {
         return 0;
     }
-    Initialized = true;
 
     if (!IsLittleEndian())
     {
@@ -305,15 +305,191 @@ int gf256_init_(int version)
     gf256_inv_init();
     gf256_muladd_mem_init();
 
+    initialized = true;
     return 0;
 }
 
+//-----------------------------------------------------------------------------
+// Operations with context
+
+void gf256_ctx::gf256_mul_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRICT vx, uint8_t y, int bytes)
+{
+    // Use a single if-statement to handle special cases
+    if (y <= 1)
+    {
+        if (y == 0)
+        {
+            memset(vz, 0, bytes);
+        }
+        return;
+    }
+
+    // Partial product tables; see above
+    const GF256_M128 table_lo_y = _mm_load_si128(MM256_TABLE_LO_Y + y);
+    const GF256_M128 table_hi_y = _mm_load_si128(MM256_TABLE_HI_Y + y);
+
+    // clr_mask = 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f
+    const GF256_M128 clr_mask = _mm_set1_epi8(0x0f);
+
+    GF256_M128 * GF256_RESTRICT z16 = reinterpret_cast<GF256_M128*>(vz);
+    const GF256_M128 * GF256_RESTRICT x16 = reinterpret_cast<const GF256_M128*>(vx);
+
+    // Handle multiples of 16 bytes
+    while (bytes >= 16)
+    {
+        // See above comments for details
+        GF256_M128 x0 = _mm_loadu_si128(x16);
+        GF256_M128 l0 = _mm_and_si128(x0, clr_mask);
+        x0 = _mm_srli_epi64(x0, 4);
+        GF256_M128 h0 = _mm_and_si128(x0, clr_mask);
+        l0 = _mm_shuffle_epi8(table_lo_y, l0);
+        h0 = _mm_shuffle_epi8(table_hi_y, h0);
+        _mm_storeu_si128(z16, _mm_xor_si128(l0, h0));
+
+        x16++;
+        z16++;
+        bytes -= 16;
+    }
+
+    uint8_t * GF256_RESTRICT z8 = reinterpret_cast<uint8_t*>(z16);
+    const uint8_t * GF256_RESTRICT x8 = reinterpret_cast<const uint8_t*>(x16);
+    const uint8_t * GF256_RESTRICT table = GF256_MUL_TABLE + ((unsigned)y << 8);
+
+    // Handle a block of 8 bytes
+    if (bytes >= 8)
+    {
+        uint64_t word = table[x8[0]];
+        word |= (uint64_t)table[x8[1]] << 8;
+        word |= (uint64_t)table[x8[2]] << 16;
+        word |= (uint64_t)table[x8[3]] << 24;
+        word |= (uint64_t)table[x8[4]] << 32;
+        word |= (uint64_t)table[x8[5]] << 40;
+        word |= (uint64_t)table[x8[6]] << 48;
+        word |= (uint64_t)table[x8[7]] << 56;
+        *(uint64_t*)z8 = word;
+
+        x8 += 8;
+        z8 += 8;
+        bytes -= 8;
+    }
+
+    // Handle a block of 4 bytes
+    if (bytes >= 4)
+    {
+        uint32_t word = table[x8[0]];
+        word |= (uint32_t)table[x8[1]] << 8;
+        word |= (uint32_t)table[x8[2]] << 16;
+        word |= (uint32_t)table[x8[3]] << 24;
+        *(uint32_t*)z8 = word;
+
+        x8 += 4;
+        z8 += 4;
+        bytes -= 4;
+    }
+
+    // Handle single bytes
+    switch (bytes)
+    {
+    case 3: z8[2] = table[x8[2]];
+    case 2: z8[1] = table[x8[1]];
+    case 1: z8[0] = table[x8[0]];
+    default:
+        break;
+    }
+}
+
+void gf256_ctx::gf256_muladd_mem(void * GF256_RESTRICT vz, uint8_t y, const void * GF256_RESTRICT vx, int bytes)
+{
+    // Use a single if-statement to handle special cases
+    if (y <= 1)
+    {
+        if (y == 1)
+        {
+            gf256_add_mem(vz, vx, bytes);
+        }
+        return;
+    }
+
+    // Partial product tables; see above
+    const GF256_M128 table_lo_y = _mm_load_si128(MM256_TABLE_LO_Y + y);
+    const GF256_M128 table_hi_y = _mm_load_si128(MM256_TABLE_HI_Y + y);
+
+    // clr_mask = 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f
+    const GF256_M128 clr_mask = _mm_set1_epi8(0x0f);
+
+    GF256_M128 * GF256_RESTRICT z16 = reinterpret_cast<GF256_M128*>(vz);
+    const GF256_M128 * GF256_RESTRICT x16 = reinterpret_cast<const GF256_M128*>(vx);
+
+    // Handle multiples of 16 bytes
+    while (bytes >= 16)
+    {
+        // See above comments for details
+        GF256_M128 x0 = _mm_loadu_si128(x16);
+        GF256_M128 l0 = _mm_and_si128(x0, clr_mask);
+        x0 = _mm_srli_epi64(x0, 4);
+        GF256_M128 h0 = _mm_and_si128(x0, clr_mask);
+        l0 = _mm_shuffle_epi8(table_lo_y, l0);
+        h0 = _mm_shuffle_epi8(table_hi_y, h0);
+        const GF256_M128 p0 = _mm_xor_si128(l0, h0);
+        const GF256_M128 z0 = _mm_loadu_si128(z16);
+        _mm_storeu_si128(z16, _mm_xor_si128(p0, z0));
+
+        x16++;
+        z16++;
+        bytes -= 16;
+    }
+
+    uint8_t * GF256_RESTRICT z8 = reinterpret_cast<uint8_t*>(z16);
+    const uint8_t * GF256_RESTRICT x8 = reinterpret_cast<const uint8_t*>(x16);
+    const uint8_t * GF256_RESTRICT table = GF256_MUL_TABLE + ((unsigned)y << 8);
+
+    // Handle a block of 8 bytes
+    if (bytes >= 8)
+    {
+        uint64_t word = table[x8[0]];
+        word |= (uint64_t)table[x8[1]] << 8;
+        word |= (uint64_t)table[x8[2]] << 16;
+        word |= (uint64_t)table[x8[3]] << 24;
+        word |= (uint64_t)table[x8[4]] << 32;
+        word |= (uint64_t)table[x8[5]] << 40;
+        word |= (uint64_t)table[x8[6]] << 48;
+        word |= (uint64_t)table[x8[7]] << 56;
+        *(uint64_t*)z8 ^= word;
+
+        x8 += 8;
+        z8 += 8;
+        bytes -= 8;
+    }
+
+    // Handle a block of 4 bytes
+    if (bytes >= 4)
+    {
+        uint32_t word = table[x8[0]];
+        word |= (uint32_t)table[x8[1]] << 8;
+        word |= (uint32_t)table[x8[2]] << 16;
+        word |= (uint32_t)table[x8[3]] << 24;
+        *(uint32_t*)z8 ^= word;
+
+        x8 += 4;
+        z8 += 4;
+        bytes -= 4;
+    }
+
+    // Handle single bytes
+    switch (bytes)
+    {
+    case 3: z8[2] ^= table[x8[2]];
+    case 2: z8[1] ^= table[x8[1]];
+    case 1: z8[0] ^= table[x8[0]];
+    default:
+        break;
+    }
+}
 
 //-----------------------------------------------------------------------------
-// Operations
+// Static operations
 
-void gf256_add_mem(void * GF256_RESTRICT vx,
-                              const void * GF256_RESTRICT vy, int bytes)
+void gf256_ctx::gf256_add_mem(void * GF256_RESTRICT vx, const void * GF256_RESTRICT vy, int bytes)
 {
     GF256_M128 * GF256_RESTRICT x16 = reinterpret_cast<GF256_M128*>(vx);
     const GF256_M128 * GF256_RESTRICT y16 = reinterpret_cast<const GF256_M128*>(vy);
@@ -396,8 +572,7 @@ void gf256_add_mem(void * GF256_RESTRICT vx,
     }
 }
 
-void gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRICT vx,
-                               const void * GF256_RESTRICT vy, int bytes)
+void gf256_ctx::gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRICT vx, const void * GF256_RESTRICT vy, int bytes)
 {
     GF256_M128 * GF256_RESTRICT z16 = reinterpret_cast<GF256_M128*>(vz);
     const GF256_M128 * GF256_RESTRICT x16 = reinterpret_cast<const GF256_M128*>(vx);
@@ -463,8 +638,7 @@ void gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRICT vx,
     }
 }
 
-void gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRICT vx,
-                                 const void * GF256_RESTRICT vy, int bytes)
+void gf256_ctx::gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRICT vx, const void * GF256_RESTRICT vy, int bytes)
 {
     GF256_M128 * GF256_RESTRICT z16 = reinterpret_cast<GF256_M128*>(vz);
     const GF256_M128 * GF256_RESTRICT x16 = reinterpret_cast<const GF256_M128*>(vx);
@@ -546,181 +720,6 @@ void gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRICT vx,
     case 3: z1[2] = x1[2] ^ y1[2];
     case 2: z1[1] = x1[1] ^ y1[1];
     case 1: z1[0] = x1[0] ^ y1[0];
-    default:
-        break;
-    }
-}
-
-void gf256_muladd_mem(void * GF256_RESTRICT vz, uint8_t y,
-                                 const void * GF256_RESTRICT vx, int bytes)
-{
-    // Use a single if-statement to handle special cases
-    if (y <= 1)
-    {
-        if (y == 1)
-        {
-            gf256_add_mem(vz, vx, bytes);
-        }
-        return;
-    }
-
-    // Partial product tables; see above
-    const GF256_M128 table_lo_y = _mm_load_si128(GF256Ctx.MM256_TABLE_LO_Y + y);
-    const GF256_M128 table_hi_y = _mm_load_si128(GF256Ctx.MM256_TABLE_HI_Y + y);
-
-    // clr_mask = 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f
-    const GF256_M128 clr_mask = _mm_set1_epi8(0x0f);
-
-    GF256_M128 * GF256_RESTRICT z16 = reinterpret_cast<GF256_M128*>(vz);
-    const GF256_M128 * GF256_RESTRICT x16 = reinterpret_cast<const GF256_M128*>(vx);
-
-    // Handle multiples of 16 bytes
-    while (bytes >= 16)
-    {
-        // See above comments for details
-        GF256_M128 x0 = _mm_loadu_si128(x16);
-        GF256_M128 l0 = _mm_and_si128(x0, clr_mask);
-        x0 = _mm_srli_epi64(x0, 4);
-        GF256_M128 h0 = _mm_and_si128(x0, clr_mask);
-        l0 = _mm_shuffle_epi8(table_lo_y, l0);
-        h0 = _mm_shuffle_epi8(table_hi_y, h0);
-        const GF256_M128 p0 = _mm_xor_si128(l0, h0);
-        const GF256_M128 z0 = _mm_loadu_si128(z16);
-        _mm_storeu_si128(z16, _mm_xor_si128(p0, z0));
-
-        x16++;
-        z16++;
-        bytes -= 16;
-    }
-
-    uint8_t * GF256_RESTRICT z8 = reinterpret_cast<uint8_t*>(z16);
-    const uint8_t * GF256_RESTRICT x8 = reinterpret_cast<const uint8_t*>(x16);
-    const uint8_t * GF256_RESTRICT table = GF256Ctx.GF256_MUL_TABLE + ((unsigned)y << 8);
-
-    // Handle a block of 8 bytes
-    if (bytes >= 8)
-    {
-        uint64_t word = table[x8[0]];
-        word |= (uint64_t)table[x8[1]] << 8;
-        word |= (uint64_t)table[x8[2]] << 16;
-        word |= (uint64_t)table[x8[3]] << 24;
-        word |= (uint64_t)table[x8[4]] << 32;
-        word |= (uint64_t)table[x8[5]] << 40;
-        word |= (uint64_t)table[x8[6]] << 48;
-        word |= (uint64_t)table[x8[7]] << 56;
-        *(uint64_t*)z8 ^= word;
-
-        x8 += 8;
-        z8 += 8;
-        bytes -= 8;
-    }
-
-    // Handle a block of 4 bytes
-    if (bytes >= 4)
-    {
-        uint32_t word = table[x8[0]];
-        word |= (uint32_t)table[x8[1]] << 8;
-        word |= (uint32_t)table[x8[2]] << 16;
-        word |= (uint32_t)table[x8[3]] << 24;
-        *(uint32_t*)z8 ^= word;
-
-        x8 += 4;
-        z8 += 4;
-        bytes -= 4;
-    }
-
-    // Handle single bytes
-    switch (bytes)
-    {
-    case 3: z8[2] ^= table[x8[2]];
-    case 2: z8[1] ^= table[x8[1]];
-    case 1: z8[0] ^= table[x8[0]];
-    default:
-        break;
-    }
-}
-
-void gf256_mul_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRICT vx, uint8_t y, int bytes)
-{
-    // Use a single if-statement to handle special cases
-    if (y <= 1)
-    {
-        if (y == 0)
-        {
-            memset(vz, 0, bytes);
-        }
-        return;
-    }
-
-    // Partial product tables; see above
-    const GF256_M128 table_lo_y = _mm_load_si128(GF256Ctx.MM256_TABLE_LO_Y + y);
-    const GF256_M128 table_hi_y = _mm_load_si128(GF256Ctx.MM256_TABLE_HI_Y + y);
-
-    // clr_mask = 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f
-    const GF256_M128 clr_mask = _mm_set1_epi8(0x0f);
-
-    GF256_M128 * GF256_RESTRICT z16 = reinterpret_cast<GF256_M128*>(vz);
-    const GF256_M128 * GF256_RESTRICT x16 = reinterpret_cast<const GF256_M128*>(vx);
-
-    // Handle multiples of 16 bytes
-    while (bytes >= 16)
-    {
-        // See above comments for details
-        GF256_M128 x0 = _mm_loadu_si128(x16);
-        GF256_M128 l0 = _mm_and_si128(x0, clr_mask);
-        x0 = _mm_srli_epi64(x0, 4);
-        GF256_M128 h0 = _mm_and_si128(x0, clr_mask);
-        l0 = _mm_shuffle_epi8(table_lo_y, l0);
-        h0 = _mm_shuffle_epi8(table_hi_y, h0);
-        _mm_storeu_si128(z16, _mm_xor_si128(l0, h0));
-
-        x16++;
-        z16++;
-        bytes -= 16;
-    }
-
-    uint8_t * GF256_RESTRICT z8 = reinterpret_cast<uint8_t*>(z16);
-    const uint8_t * GF256_RESTRICT x8 = reinterpret_cast<const uint8_t*>(x16);
-    const uint8_t * GF256_RESTRICT table = GF256Ctx.GF256_MUL_TABLE + ((unsigned)y << 8);
-
-    // Handle a block of 8 bytes
-    if (bytes >= 8)
-    {
-        uint64_t word = table[x8[0]];
-        word |= (uint64_t)table[x8[1]] << 8;
-        word |= (uint64_t)table[x8[2]] << 16;
-        word |= (uint64_t)table[x8[3]] << 24;
-        word |= (uint64_t)table[x8[4]] << 32;
-        word |= (uint64_t)table[x8[5]] << 40;
-        word |= (uint64_t)table[x8[6]] << 48;
-        word |= (uint64_t)table[x8[7]] << 56;
-        *(uint64_t*)z8 = word;
-
-        x8 += 8;
-        z8 += 8;
-        bytes -= 8;
-    }
-
-    // Handle a block of 4 bytes
-    if (bytes >= 4)
-    {
-        uint32_t word = table[x8[0]];
-        word |= (uint32_t)table[x8[1]] << 8;
-        word |= (uint32_t)table[x8[2]] << 16;
-        word |= (uint32_t)table[x8[3]] << 24;
-        *(uint32_t*)z8 = word;
-
-        x8 += 4;
-        z8 += 4;
-        bytes -= 4;
-    }
-
-    // Handle single bytes
-    switch (bytes)
-    {
-    case 3: z8[2] = table[x8[2]];
-    case 2: z8[1] = table[x8[1]];
-    case 1: z8[0] = table[x8[0]];
     default:
         break;
     }

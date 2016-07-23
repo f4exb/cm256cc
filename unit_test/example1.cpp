@@ -38,13 +38,7 @@ Example1Tx::Example1Tx(int samplesPerBlock, int nbOriginalBlocks, int nbFecBlock
     m_params.BlockBytes = samplesPerBlock * sizeof(Sample);
     m_params.OriginalCount = nbOriginalBlocks;
     m_params.RecoveryCount = nbFecBlocks;
-
-    if (cm256_init()) {
-        m_cm256_OK = false;
-        std::cerr << "Example1Tx::Example1Tx: cannot initialize CM256 library" << std::endl;
-    } else {
-        m_cm256_OK = true;
-    }
+    m_cm256_OK = m_cm256.isInitialized();
 }
 
 Example1Tx::~Example1Tx()
@@ -94,7 +88,7 @@ bool Example1Tx::makeFecBlocks(SuperBlock *txBlocks, uint16_t frameIndex)
 
 	    if (m_cm256_OK)
 	    {
-	        if (cm256_encode(m_params, m_txDescriptorBlocks, m_txRecovery))
+	        if (m_cm256.cm256_encode(m_params, m_txDescriptorBlocks, m_txRecovery))
 	        {
 	            std::cerr << "example2: encode failed" << std::endl;
 	            return false;
@@ -147,13 +141,7 @@ Example1Rx::Example1Rx(int samplesPerBlock, int nbOriginalBlocks, int nbFecBlock
     m_params.OriginalCount = nbOriginalBlocks;
     m_params.RecoveryCount = nbFecBlocks;
     m_currentMeta.init();
-
-    if (cm256_init()) {
-        m_cm256_OK = false;
-        std::cerr << "Example1Rx::Example1Rx: cannot initialize CM256 library" << std::endl;
-    } else {
-        m_cm256_OK = true;
-    }
+    m_cm256_OK = m_cm256.isInitialized();
 }
 
 Example1Rx::~Example1Rx()
@@ -236,7 +224,7 @@ void Example1Rx::processBlock(SuperBlock& superBlock)
     {
         if (m_cm256_OK && (m_recoveryCount > 0)) // FEC necessary
         {
-            if (cm256_decode(m_params, m_descriptorBlocks)) // failure to decode
+            if (m_cm256.cm256_decode(m_params, m_descriptorBlocks)) // failure to decode
             {
                 std::cerr << "Example1Rx::processBlock: CM256 decode error" << std::endl;
             }
