@@ -3,6 +3,8 @@ Fast GF(256) Cauchy MDS Block Erasure Codec in C++
 
 This is the rewrite in (as much as possible) clean C++ of [cm256](https://github.com/f4exb/cm256). In some contexts like Qt programs and plugins the original cm256 library does not work.
 
+cm256cc performance is on par or even better than cm256. This is particularly true for armv7 architecture (Raspberry Pi 2 and 3) and is the most significant with Raspberry Pi 2.
+
 cm256cc is a simple library for erasure codes.  From given data it generates
 redundant data that can be used to recover the originals.
 
