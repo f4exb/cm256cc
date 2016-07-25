@@ -214,8 +214,10 @@ private:
 
     static bool IsLittleEndian()
     {
-        unsigned char littleEndianTestData[4] = { 4, 3, 2, 1 };
-        return 0x01020304 == *reinterpret_cast<uint32_t*>(littleEndianTestData);
+        int x = 1;
+        char *y = (char *) &x;
+
+        return *y != 0;
     }
 
     //-----------------------------------------------------------------------------
