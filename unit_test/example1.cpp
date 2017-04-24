@@ -364,4 +364,6 @@ bool example1_rx(const std::string& dataaddress, unsigned short dataport, std::a
         rxBlock = *((SuperBlock *) rawBlock);
         ex1.processBlock(rxBlock);
     }
+
+    return true;
 }
