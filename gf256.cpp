@@ -26,6 +26,9 @@
     POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "gf256.h"
 
 const uint8_t gf256_ctx::GF256_GEN_POLY[GF256_GEN_POLY_COUNT] = {
@@ -295,7 +298,7 @@ int gf256_ctx::gf256_init_()
 
     if (!IsLittleEndian())
     {
-        // Architecture is not supported (code won't work without mods).
+        fprintf(stderr, "gf256_ctx::gf256_init_: Little Endian architecture expected (code won't work without mods)\n");
         return -2;
     }
 
@@ -306,6 +309,7 @@ int gf256_ctx::gf256_init_()
     gf256_muladd_mem_init();
 
     initialized = true;
+    fprintf(stderr, "gf256_ctx::gf256_init_: initialized\n");
     return 0;
 }
 
