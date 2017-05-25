@@ -211,9 +211,9 @@ int CM256::cm256_encode(
 // Decoding
 
 CM256::CM256Decoder::CM256Decoder(gf256_ctx& gf256Ctx) :
-    m_gf256Ctx(gf256Ctx),
-    RecoveryCount(0),
-    OriginalCount(0)
+            RecoveryCount(0),
+            OriginalCount(0),
+            m_gf256Ctx(gf256Ctx)
 {
 }
 

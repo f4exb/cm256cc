@@ -84,8 +84,13 @@ int main(int argc, char *argv[])
     int dataport = 9090;
     std::string filename("cm256.test");
     std::string refFilename("cm256.ref.test");
-    std:;string blockExclusionStr;
+    std::string blockExclusionStr;
     std::vector<int> blocExclusionList;
+
+    struct sigaction action;
+    memset(&action, 0, sizeof(struct sigaction));
+    action.sa_handler = handle_sigterm;
+    sigaction(SIGTERM, &action, NULL);
 
     const struct option longopts[] = {
         { "exlist",     2, NULL, 'x' },

@@ -84,6 +84,11 @@ int main(int argc, char *argv[])
     std::string filename("cm256.test");
     std::string refFilename("cm256.ref.test");
 
+    struct sigaction action;
+    memset(&action, 0, sizeof(struct sigaction));
+    action.sa_handler = handle_sigterm;
+    sigaction(SIGTERM, &action, NULL);
+
     const struct option longopts[] = {
         { "case",       1, NULL, 'c' },
         { "daddress",   2, NULL, 'I' },

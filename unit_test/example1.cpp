@@ -130,9 +130,9 @@ void Example1Tx::transmitBlocks(SuperBlock *txBlocks,
 }
 
 Example1Rx::Example1Rx(int samplesPerBlock, int nbOriginalBlocks, int nbFecBlocks) :
+    m_frameHead(0),
     m_frameCount(0),
     m_blockCount(0),
-    m_frameHead(0),
     m_metaReceived(false),
     m_dataCount(0),
     m_recoveryCount(0)
@@ -335,7 +335,7 @@ bool example1_rx(const std::string& dataaddress, unsigned short dataport, std::a
 {
     SuperBlock rxBlock;
     uint8_t rawBlock[sizeof(SuperBlock)];
-    int rawBlockSize;
+    uint32_t rawBlockSize;
     UDPSocket rxSocket(dataport);
     std::string senderaddress, senderaddress0;
     unsigned short senderport, senderport0 = 0;
@@ -361,7 +361,7 @@ bool example1_rx(const std::string& dataaddress, unsigned short dataport, std::a
             usleep(10);
         }
 
-        rxBlock = *((SuperBlock *) rawBlock);
+        memcpy(&rxBlock, rawBlock, sizeof(SuperBlock));
         ex1.processBlock(rxBlock);
     }
 

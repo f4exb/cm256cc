@@ -62,12 +62,12 @@ CSocket::CSocket( int sockDesc )
     m_sockDesc = sockDesc;
 }
 
-CSocket::CSocket( const CSocket &sock )
+CSocket::CSocket( const CSocket &sock __attribute__((unused)))
 {
 
 }
 
-void CSocket::operator=( const CSocket &sock )
+void CSocket::operator=( const CSocket &sock __attribute__((unused)))
 {
 
 }

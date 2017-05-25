@@ -139,7 +139,7 @@ public:
         assert(recoveryBlockIndex >= 0 && recoveryBlockIndex < params.RecoveryCount);
         return (unsigned char)(params.OriginalCount + recoveryBlockIndex);
     }
-    static inline unsigned char cm256_get_original_block_index(cm256_encoder_params params, int originalBlockIndex)
+    static inline unsigned char cm256_get_original_block_index(cm256_encoder_params params __attribute__((unused)), int originalBlockIndex)
     {
         assert(originalBlockIndex >= 0 && originalBlockIndex < params.OriginalCount);
         return (unsigned char)(originalBlockIndex);

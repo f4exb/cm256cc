@@ -607,10 +607,9 @@ bool example4()
     ProtectedBlock  blockZero;
     ProtectedBlock* retrievedDataBuffer = (ProtectedBlock *) samplesBuffer;
     ProtectedBlock* recoveryBuffer = new ProtectedBlock[params.OriginalCount];      // recovery blocks with maximum size
-    bool blockZeroRetrieved = false;
 
     CM256::cm256_block rxDescriptorBlocks[params.OriginalCount];
-    int recoveryStartIndex;
+    int recoveryStartIndex = 0;
     int recoveryCount = 0;
     int nbBlocks = 0;
 
@@ -626,7 +625,6 @@ bool example4()
             {
                 blockZero = rxBuffer[i].protectedBlock;
                 rxDescriptorBlocks[i].Block = (void *) &blockZero;
-                blockZeroRetrieved = true;
             }
             else if (blockIndex < params.OriginalCount) // it's an original block
             {
@@ -673,7 +671,6 @@ bool example4()
                     if (blockIndex == 0) // it is block #0
                     {
                         blockZero = recoveryBuffer[ir];
-                        blockZeroRetrieved = true;
                     }
                     else
                     {
