@@ -425,7 +425,7 @@ FORCE_INLINE __m128i _mm_shuffle_epi_2103(__m128i a, __m128i b)
 // gets the lower 64 bits of b and places it in the lower 64 bits
 FORCE_INLINE __m128i _mm_shuffle_epi_1010(__m128i a, __m128i b)
 {
-    return vcombine_s32(vget_low_s32(a), vget_low_s32(a));
+    return vcombine_s32(vget_low_s32(a), vget_low_s32(b));
 }
 
 // gets the lower 64 bits of a, and places it in the upper 64 bits
@@ -942,7 +942,7 @@ FORCE_INLINE void _mm_stream_si128(__m128i *p, __m128i a)
 }
 
 // Cache line containing p is flushed and invalidated from all caches in the coherency domain.
-FORCE_INLINE void _mm_clflush(void const*p) {
+FORCE_INLINE void _mm_clflush(void const*p __attribute__((unused))) {
     // no corollary for Neon?
 }
 
