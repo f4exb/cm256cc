@@ -170,5 +170,5 @@ target_link_libraries(cm256_rx cm256cc)
 # Installation
 
 install(TARGETS cm256_test cm256_tx cm256_rx DESTINATION bin)
-install(TARGETS cm256cc DESTINATION lib)
+install(TARGETS cm256cc DESTINATION lib${LIB_SUFFIX})
 install(FILES ${cm256_HEADERS} DESTINATION include/${PROJECT_NAME})
