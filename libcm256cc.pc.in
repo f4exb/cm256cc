@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: cm256cc library
+Description: Fast GF(256) Cauchy MDS Block Erasure Codec in C++
+Version: @VERSION@
+Cflags: -I${includedir}/ @CM256CC_PC_CFLAGS@
+Libs: -L${libdir} -lcm256cc
+Libs.private: @CM256CC_PC_LIBS@
+

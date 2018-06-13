@@ -15,6 +15,15 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 project(cm256cc)
 
+set(MAJOR_VERSION 0)
+set(MINOR_VERSION 0)
+set(PACKAGE libcm256cc)
+set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION})
+set(VERSION ${VERSION_STRING})
+
+include(GNUInstallDirs)
+set(LIB_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}") # "lib" or "lib64"
+
 if (BUILD_TYPE MATCHES RELEASE)
     set(CMAKE_BUILD_TYPE "Release")
 elseif (BUILD_TYPE MATCHES RELEASEWITHDBGINFO)
@@ -182,8 +191,35 @@ target_include_directories(cm256_rx PUBLIC
 
 target_link_libraries(cm256_rx cm256cc)
 
+
+########################################################################
+# Create Pkg Config File
+########################################################################
+
+# use space-separation format for the pc file
+STRING(REPLACE ";" " " CM256CC_PC_REQUIRES "${CM256CC_PC_REQUIRES}")
+STRING(REPLACE ";" " " CM256CC_PC_CFLAGS "${CM256CC_PC_CFLAGS}")
+STRING(REPLACE ";" " " CM256CC_PC_LIBS "${CM256CC_PC_LIBS}")
+
+# unset these vars to avoid hard-coded paths to cross environment
+IF(CMAKE_CROSSCOMPILING)
+    UNSET(CM256CC_PC_CFLAGS)
+    UNSET(CM256CC_PC_LIBS)
+ENDIF(CMAKE_CROSSCOMPILING)
+
+CONFIGURE_FILE(
+    ${CMAKE_CURRENT_SOURCE_DIR}/libcm256cc.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/libcm256cc.pc
+@ONLY)
+
+INSTALL(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/libcm256cc.pc
+    DESTINATION ${LIB_INSTALL_DIR}/pkgconfig
+)
+
+
 # Installation
 
 install(TARGETS cm256_test cm256_tx cm256_rx DESTINATION bin)
-install(TARGETS cm256cc DESTINATION lib${LIB_SUFFIX})
+install(TARGETS cm256cc DESTINATION  ${LIB_INSTALL_DIR})
 install(FILES ${cm256_HEADERS} DESTINATION include/${PROJECT_NAME})
