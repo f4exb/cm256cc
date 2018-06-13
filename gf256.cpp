@@ -392,13 +392,8 @@ void gf256_ctx::gf256_mul_mem(void * GF256_RESTRICT vz, const void * GF256_RESTR
     }
 
     // Handle single bytes
-    switch (bytes)
-    {
-    case 3: z8[2] = table[x8[2]];
-    case 2: z8[1] = table[x8[1]];
-    case 1: z8[0] = table[x8[0]];
-    default:
-        break;
+    for (int i = bytes; i > 0; i--) {
+        z8[i-1] = table[x8[i-1]];
     }
 }
 
@@ -480,13 +475,8 @@ void gf256_ctx::gf256_muladd_mem(void * GF256_RESTRICT vz, uint8_t y, const void
     }
 
     // Handle single bytes
-    switch (bytes)
-    {
-    case 3: z8[2] ^= table[x8[2]];
-    case 2: z8[1] ^= table[x8[1]];
-    case 1: z8[0] ^= table[x8[0]];
-    default:
-        break;
+    for (int i = bytes; i > 0; i--) {
+        z8[i-1] ^= table[x8[i-1]];
     }
 }
 
@@ -566,13 +556,8 @@ void gf256_ctx::gf256_add_mem(void * GF256_RESTRICT vx, const void * GF256_RESTR
     }
 
     // Handle final bytes
-    switch (bytes)
-    {
-    case 3: x1[2] ^= y1[2];
-    case 2: x1[1] ^= y1[1];
-    case 1: x1[0] ^= y1[0];
-    default:
-        break;
+    for (int i = bytes; i > 0; i--) {
+        x1[i-1] ^= y1[i-1];
     }
 }
 
@@ -632,13 +617,8 @@ void gf256_ctx::gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_REST
     }
 
     // Handle final bytes
-    switch (bytes)
-    {
-    case 3: z1[2] ^= x1[2] ^ y1[2];
-    case 2: z1[1] ^= x1[1] ^ y1[1];
-    case 1: z1[0] ^= x1[0] ^ y1[0];
-    default:
-        break;
+    for (int i = bytes; i > 0; i--) {
+        z1[i-1] ^= x1[i-1] ^ y1[i-1];
     }
 }
 
@@ -719,13 +699,8 @@ void gf256_ctx::gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RE
     }
 
     // Handle final bytes
-    switch (bytes)
-    {
-    case 3: z1[2] = x1[2] ^ y1[2];
-    case 2: z1[1] = x1[1] ^ y1[1];
-    case 1: z1[0] = x1[0] ^ y1[0];
-    default:
-        break;
+    for (int i = bytes; i > 0; i--) {
+        z1[i-1] = x1[i-1] ^ y1[i-1];
     }
 }
 
@@ -782,12 +757,8 @@ void gf256_memswap(void * GF256_RESTRICT vx, void * GF256_RESTRICT vy, int bytes
 
     // Handle final bytes
     uint8_t temp;
-    switch (bytes)
-    {
-    case 3: temp = x1[2]; x1[2] = y1[2]; y1[2] = temp;
-    case 2: temp = x1[1]; x1[1] = y1[1]; y1[1] = temp;
-    case 1: temp = x1[0]; x1[0] = y1[0]; y1[0] = temp;
-    default:
-        break;
+
+    for (int i = bytes; i > 0; i--) {
+        temp = x1[i-1]; x1[i-1] = y1[i-1]; y1[i-1] = temp;
     }
 }

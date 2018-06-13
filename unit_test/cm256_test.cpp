@@ -215,7 +215,7 @@ bool example2()
 
     SuperBlock* txBuffer = new SuperBlock[params.OriginalCount+params.RecoveryCount];
     ProtectedBlock* txRecovery = new ProtectedBlock[params.RecoveryCount];
-    CM256::cm256_block txDescriptorBlocks[params.OriginalCount+params.RecoveryCount];
+    CM256::cm256_block *txDescriptorBlocks = new CM256::cm256_block[params.OriginalCount+params.RecoveryCount];
     int frameCount = 0;
 
     // Fill original data
@@ -307,6 +307,7 @@ bool example2()
 
     std::cerr << "Decoded in " << usecs << " microseconds" << std::endl;
 
+    delete[] txDescriptorBlocks;
     delete[] txBuffer;
     delete[] txRecovery;
     delete[] rxBuffer;
