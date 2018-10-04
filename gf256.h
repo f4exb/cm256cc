@@ -73,7 +73,7 @@
     #define GF256_FORCE_INLINE __attribute__((always_inline)) inline
 
     // Compiler-specific alignment keyword
-    #define GF256_ALIGNED __attribute__((align(16)))
+    #define GF256_ALIGNED __attribute__((aligned(16)))
 
     // Compiler-specific SSE headers
     #include <x86intrin.h>
@@ -94,7 +94,7 @@
     #define GF256_FORCE_INLINE __attribute__((always_inline)) inline
 
     // Compiler-specific alignment keyword
-    #define GF256_ALIGNED __attribute__((align(16)))
+    #define GF256_ALIGNED __attribute__((aligned(16)))
 
 #endif
 
@@ -200,8 +200,8 @@ public:
     // Muladd_mem tables
     // We require memory to be aligned since the SIMD instructions benefit from
     // aligned accesses to the MM256_* table data.
-    GF256_M128 MM256_TABLE_LO_Y[256];
-    GF256_M128 MM256_TABLE_HI_Y[256];
+    GF256_ALIGNED GF256_M128 MM256_TABLE_LO_Y[256];
+    GF256_ALIGNED GF256_M128 MM256_TABLE_HI_Y[256];
 
 private:
     int gf256_init_();
