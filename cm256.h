@@ -34,8 +34,9 @@
 
 #include <assert.h>
 #include "gf256.h"
+#include "export.h"
 
-class CM256
+class CM256CC_API CM256
 {
 public:
     // Encoder parameters
@@ -139,14 +140,15 @@ public:
         assert(recoveryBlockIndex >= 0 && recoveryBlockIndex < params.RecoveryCount);
         return (unsigned char)(params.OriginalCount + recoveryBlockIndex);
     }
-    static inline unsigned char cm256_get_original_block_index(cm256_encoder_params params __attribute__((unused)), int originalBlockIndex)
+    static inline unsigned char cm256_get_original_block_index(cm256_encoder_params params, int originalBlockIndex)
     {
+        (void) params;
         assert(originalBlockIndex >= 0 && originalBlockIndex < params.OriginalCount);
         return (unsigned char)(originalBlockIndex);
     }
 
 private:
-    class CM256Decoder
+    class CM256CC_API CM256Decoder
     {
     public:
         CM256Decoder(gf256_ctx& gf256Ctx);

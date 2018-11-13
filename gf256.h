@@ -31,6 +31,7 @@
 
 #include <stdint.h> // uint32_t etc
 #include <string.h> // memcpy, memset
+#include "export.h"
 
 // TBD: Fix the polynomial at one value and use precomputed tables here to
 // simplify the API for GF256.h version 2.  Avoids user data alignment issues.
@@ -123,7 +124,7 @@
     #pragma warning(disable: 4324) // warning C4324: 'gf256_ctx' : structure was padded due to __declspec(align())
 #endif
 
-class gf256_ctx // 141,072 bytes
+class CM256CC_API gf256_ctx // 141,072 bytes
 {
 public:
     gf256_ctx();
