@@ -139,6 +139,7 @@ set(cm256_HEADERS
   cm256.h
   gf256.h
   sse2neon.h
+  export.h
 )
 
 add_library(cm256cc SHARED
