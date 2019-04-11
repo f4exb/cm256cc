@@ -1,6 +1,6 @@
 prefix=@CMAKE_INSTALL_PREFIX@
 exec_prefix=${prefix}
-libdir=@CMAKE_INSTALL_LIBDIR@
+libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
 includedir=${prefix}/include
 
 Name: cm256cc library
@@ -9,4 +9,3 @@ Version: @VERSION@
 Cflags: -I${includedir}/ @CM256CC_PC_CFLAGS@
 Libs: -L${libdir} -lcm256cc
 Libs.private: @CM256CC_PC_LIBS@
-
