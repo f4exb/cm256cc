@@ -142,6 +142,12 @@ set(cm256_HEADERS
   export.h
 )
 
+include_directories(
+    .
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${Boost_INCLUDE_DIRS}
+)
+
 add_library(cm256cc SHARED
   ${cm256_SOURCES}
 )
