@@ -103,7 +103,7 @@ void CSocket::BindLocalPort( unsigned short localPort )
     localAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     localAddr.sin_port = htons(localPort);
 
-    if (bind(m_sockDesc, (sockaddr *) &localAddr, sizeof(sockaddr_in)) < 0) {
+    if (::bind(m_sockDesc, (sockaddr *) &localAddr, sizeof(sockaddr_in)) < 0) {
         throw CSocketException("Set of local port failed (bind())", true);
     }
 }
@@ -114,7 +114,7 @@ void CSocket::BindLocalAddressAndPort( const string &localAddress, unsigned shor
     sockaddr_in localAddr;
     FillAddr(localAddress, localPort, localAddr);
 
-    if (bind(m_sockDesc, (sockaddr *) &localAddr, sizeof(sockaddr_in)) < 0) {
+    if (::bind(m_sockDesc, (sockaddr *) &localAddr, sizeof(sockaddr_in)) < 0) {
         throw CSocketException("Set of local address and port failed (bind())", true);
     }
 }
