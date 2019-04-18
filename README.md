@@ -39,6 +39,11 @@ Result:
 
 Include the cm256cc library in your project and cm256.h header in your program. Have a look at example programs `cm256_test.cpp`, `transmit.cpp`and `receive.cpp` in the `unit_test` folder for usage. Consult the `cm256.h header` for details on the encoding / decoding method.
 
+## Compilation
+
+This is a classical cmake project. You may install the software anywhere you like with the `-DCMAKE_INSTALL_PREFIX` definition on the cmake command line. 
+
+The cmake file will try to find the best compiler optimization options depending on the hardware you are compiling this project. This may not be suitable if you intend to distribute the software or include it in a distribution. In this case you can use the `-DENABLE_DISTRIBUTION=1` define on the command line to have just SSSE3 optimization for the x86 based systems and still NEON optimization for arm or arm64.
 
 ## Usage
 
