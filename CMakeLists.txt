@@ -22,6 +22,8 @@ set(PACKAGE libcm256cc)
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION})
 set(VERSION ${VERSION_STRING})
 
+option(BUILD_TOOLS "Build unit test tools" ON)
+
 include(GNUInstallDirs)
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}") # "lib" or "lib64"
 
@@ -252,7 +254,12 @@ else()
 endif()
 
 # Compiler flags.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -ffast-math -ftree-vectorize ${EXTRA_FLAGS}")
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall ${EXTRA_FLAGS}")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -ffast-math -ftree-vectorize ${EXTRA_FLAGS}")
+endif()
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fmax-errors=10")
 endif()
@@ -286,7 +293,7 @@ add_library(cm256cc SHARED
 set_target_properties(cm256cc PROPERTIES VERSION ${VERSION} SOVERSION ${MAJOR_VERSION})
 
 # single pass test
-
+if(BUILD_TOOLS)
 add_executable(cm256_test
   unit_test/cm256_test.cpp
 )
@@ -331,7 +338,7 @@ target_include_directories(cm256_rx PUBLIC
 )
 
 target_link_libraries(cm256_rx cm256cc)
-
+endif(BUILD_TOOLS)
 
 ########################################################################
 # Create Pkg Config File
@@ -360,7 +367,8 @@ INSTALL(
 
 
 # Installation
-
-install(TARGETS cm256_test cm256_tx cm256_rx DESTINATION bin)
+if(BUILD_TOOLS)
+    install(TARGETS cm256_test cm256_tx cm256_rx DESTINATION bin)
+endif(BUILD_TOOLS)
 install(TARGETS cm256cc DESTINATION  ${LIB_INSTALL_DIR})
 install(FILES ${cm256_HEADERS} DESTINATION include/${PROJECT_NAME})
