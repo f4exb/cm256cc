@@ -37,9 +37,9 @@ CSocketException::CSocketException( const string &sMessage, bool blSysMsg /*= fa
     }
 }
 
-CSocketException::~CSocketException()
+CSocketException::~CSocketException() throw()
 {
-
+    
 }
 
 CSocket::~CSocket()
