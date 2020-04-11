@@ -105,10 +105,6 @@
     #define GF256_RESTRICT GF256_RESTRICT_KW
 #endif
 
-#ifndef nullptr
-    #define nullptr NULL
-#endif
-
 //-----------------------------------------------------------------------------
 // GF(256) Context
 //
