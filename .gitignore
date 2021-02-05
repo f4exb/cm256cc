@@ -57,3 +57,7 @@ Temporary Items
 .cproject
 .project
 build/
+builds/
+
+# CLion project directory
+.idea
