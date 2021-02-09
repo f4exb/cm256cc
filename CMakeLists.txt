@@ -271,8 +271,6 @@ set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11" )
 set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11" )
 add_definitions(-DNO_RESTRICT)
 
-find_package(Boost)
-
 set(cm256_SOURCES
   cm256.cpp
   gf256.cpp

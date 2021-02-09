@@ -29,8 +29,7 @@
 #include <climits>
 #include <sys/time.h>
 #include <iostream>
-#include <boost/lexical_cast.hpp>
-#include <boost/tokenizer.hpp>
+#include <regex>
 
 #include "mainutils.h"
 
@@ -65,24 +64,24 @@ void badarg(const char *label)
 
 bool getIntList(std::vector<int>& listInt, std::string& listString)
 {
-    boost::char_separator<char> sep(",");
-    boost::tokenizer<boost::char_separator<char> > tokens(listString, sep);
-    boost::tokenizer<boost::char_separator<char> >::iterator tok_iter = tokens.begin();
-    boost::tokenizer<boost::char_separator<char> >::iterator toks_end = tokens.end();
+  bool converted_successfully   = true;
+  std::regex splitter(",");
+  auto list_begin               = std::sregex_iterator(listString.begin(),
+                                                       listString.end(),
+                                                       splitter);
+  auto list_end                 = std::sregex_iterator();
 
-    try
-    {
-        for (; tok_iter != toks_end; ++tok_iter)
-        {
-            int item = boost::lexical_cast<int>(*tok_iter);
-            listInt.push_back(item);
-        }
+  try {
+      for (std::sregex_iterator i = list_begin; i != list_end; ++i) {
+        listInt.push_back(std::stoi(i->str()));
+      }
+  } catch (std::invalid_argument & exception) {
+    converted_successfully      = false;
+    fprintf(stderr, "ERROR: Invalid element: %s\n", listString.c_str());
+  } catch(std::out_of_range & exception) {
+    converted_successfully      = false;
+    fprintf(stderr, "ERROR: Element out of range: %s\n", listString.c_str());
+  }
 
-        return true;
-    }
-    catch (boost::bad_lexical_cast &)
-    {
-        fprintf(stderr, "ERROR: Invalid element: %s\n", listString.c_str());
-        return false;
-    }
+  return converted_successfully;
 }
