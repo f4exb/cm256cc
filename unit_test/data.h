@@ -30,6 +30,7 @@
 #define UNIT_TEST_DATA_H_
 
 #include <string.h>
+#include <stdint.h>
 
 #pragma pack(push, 1)
     struct Sample
