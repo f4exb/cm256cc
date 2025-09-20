@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 # use, i.e. don't skip the full RPATH for the build tree
 set(CMAKE_SKIP_BUILD_RPATH  FALSE)
