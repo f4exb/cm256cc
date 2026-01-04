@@ -309,7 +309,6 @@ int gf256_ctx::gf256_init_()
     gf256_muladd_mem_init();
 
     initialized = true;
-    fprintf(stderr, "gf256_ctx::gf256_init_: initialized\n");
     return 0;
 }
 
