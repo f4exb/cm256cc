@@ -347,6 +347,9 @@ endif(BUILD_TOOLS)
 ########################################################################
 
 # use space-separation format for the pc file
+if(HAS_NEON)
+    set(CM256CC_PC_CFLAGS "-DUSE_NEON"  ${CM256CC_PC_CFLAGS})
+endif()
 STRING(REPLACE ";" " " CM256CC_PC_REQUIRES "${CM256CC_PC_REQUIRES}")
 STRING(REPLACE ";" " " CM256CC_PC_CFLAGS "${CM256CC_PC_CFLAGS}")
 STRING(REPLACE ";" " " CM256CC_PC_LIBS "${CM256CC_PC_LIBS}")
